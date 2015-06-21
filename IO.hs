@@ -1,8 +1,10 @@
 module IO (
-    withFileName
+    withMarkdownAll
 ) where
 
-import System.Directory(doesFileExist)
+import Config
+import System.Directory(doesFileExist, getDirectoryContents)
+import System.FilePath ((</>), takeExtensions, dropExtensions)
 import Data.Text.Lazy.IO (writeFile)
 import Prelude hiding (writeFile)
 import Data.Text.Lazy (pack)
@@ -17,7 +19,17 @@ readMarkdownFile path = do
 
 writeHtmlFile title = writeFile (title ++ ".html")
 
-withFileName filename f = do
-    Just str <- readMarkdownFile filename
-    html <- f $ pack str
-    writeHtmlFile filename (renderHtml html)
+
+getFileList path = do
+  names <- getDirectoryContents path
+  return $ map dropExtensions $ filter (\name -> takeExtensions name == ".md") names
+
+withMarkdownAll f = do
+    filenames <- getFileList markdownDir
+    mapM_ withFileName filenames
+
+  where
+    withFileName filename = do
+        Just str <- readMarkdownFile $ markdownDir </> filename
+        html <- f (pack str, filename)
+        writeHtmlFile (staticDir </> filename) (renderHtml html)
