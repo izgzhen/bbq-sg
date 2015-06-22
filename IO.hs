@@ -1,5 +1,6 @@
 module IO (
-    withMarkdownAll
+    withMarkdownAll,
+    withIndex
 ) where
 
 import Config
@@ -33,3 +34,10 @@ withMarkdownAll f = do
         Just str <- readMarkdownFile $ markdownDir </> filename
         html <- f (pack str, filename)
         writeHtmlFile (staticDir </> filename) (renderHtml html)
+
+withIndex f = do
+    markdowns <- getFileList $ markdownDir
+    html <- f $ zip markdowns (map (\name -> name ++ ".html") markdowns)
+    writeHtmlFile (staticDir </> "index") (renderHtml html)
+
+
