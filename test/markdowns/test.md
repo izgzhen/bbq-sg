@@ -1,1 +1,0 @@
-能量量子化：$E = \frac{\hbar^2\pi^2n^2}{2ma^2}$，由 $k = \sqrt{\frac{2mE}{\hbar^2}}$ 推出

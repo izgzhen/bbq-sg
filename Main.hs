@@ -13,11 +13,11 @@ main = do
     -- Generate posts
     withMarkdownAll $ \(text, title) -> do
         let mainHtml = markdown def text
-        let headers = [ analytics "UA-54265105-1" ]
+        let headers = [ analytics analyticsId ]
 
         let html = htmlTemplate title headers $ do
                     mainHtml
-                    H.p $ H.a ! A.href "index.html"
+                    H.p $ H.a ! A.href "../index.html"
                               $ "Back to index page"
                     mathjax
 
@@ -30,7 +30,7 @@ main = do
                 let item (name, url) = H.li $ H.a ! A.href (H.toValue url) $ H.toHtml name
                 mapM_ item pages
 
-        let headers = [ analytics "UA-54265105-1" ]
+        let headers = [ analytics analyticsId ]
         let html = htmlTemplate "Index" headers mainHtml
         return html
 
