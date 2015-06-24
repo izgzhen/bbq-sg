@@ -3,7 +3,9 @@ import System.FilePath ((</>))
 
 rootDir     = "test"
 staticDir   = rootDir   </> "static"
-markdownDir = rootDir   </> "markdowns"
+srcDir      = rootDir   </> "src"
+markdownDir = srcDir    </> "markdowns"
+imgSrcDir   = srcDir    </> "images"
 postsDir    = staticDir </> "posts"
-imagesDir   = staticDir </> "images"
+imgStaDir   = staticDir </> "images"
 analyticsId = "UA-64349949-1"

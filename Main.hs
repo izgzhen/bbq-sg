@@ -3,6 +3,7 @@
 import IO
 import Plugin
 import Template
+import Meta
 import Config
 import Text.Markdown
 import Text.Blaze.Html5 as H
@@ -11,11 +12,10 @@ import Text.Blaze.Html5.Attributes as A
 
 main = do
     -- Generate posts
-    withMarkdownAll $ \(text, title) -> do
+    withMarkdownAll $ \(text, meta) -> do
         let mainHtml = markdown def text
         let headers = [ analytics analyticsId ]
-
-        let html = htmlTemplate title headers $ do
+        let html = htmlTemplate (showMaybe $ _title meta) headers $ do
                     mainHtml
                     H.p $ H.a ! A.href "../index.html"
                               $ "Back to index page"
@@ -34,3 +34,7 @@ main = do
         let html = htmlTemplate "Index" headers mainHtml
         return html
 
+
+
+showMaybe Nothing  = ""
+showMaybe (Just a) = show a

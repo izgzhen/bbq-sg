@@ -7,8 +7,7 @@ The key idea should be that, all information can be build on a single folder con
 
 
 ## TODOs
-* Image files should be put into both source and static
-* Meta info needs to be filled out and utilized
+* Meta info's email should be `Maybe`, and you should use `Either` in parsing
 * Should write a markdown draft tool to make life easier
 
 ## Spec
