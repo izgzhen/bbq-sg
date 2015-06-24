@@ -1,4 +1,4 @@
-module Meta where
+module BBQ.SG.Meta where
 import Data.List.Extra (splitOn)
 import Data.List(sort, group)
 -- Haskell's Date lib is awkward to use

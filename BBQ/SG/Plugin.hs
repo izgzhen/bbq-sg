@@ -1,7 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Plugin (
-  analytics,
-  mathjax
+
+module BBQ.SG.Plugin (
+  analytics
+, mathjax
+, urlList
+, BBQ.SG.Plugin.p
 ) where
 
 import Text.Blaze.Html5 as H
@@ -22,3 +25,12 @@ mathjax = do
             H.script ! A.type_ "text/javascript"
                      ! A.src   "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" $ ""
             H.script ! A.type_ "text/x-mathjax-config" $ "MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\\\(','\\\\)']]} });"
+
+
+urlList list = H.ul $ do
+                let itemize (name, url) = H.li $ H.a ! A.href (H.toValue url) $ H.toHtml name
+                mapM_ itemize list
+
+-- Re-export part of HTML tags
+p :: ToMarkup a => a -> Html
+p = H.p . toHtml

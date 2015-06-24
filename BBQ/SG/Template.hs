@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Template (
+module BBQ.SG.Template (
     htmlTemplate
 ) where
 

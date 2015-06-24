@@ -7,8 +7,12 @@ The key idea should be that, all information can be build on a single folder con
 
 
 ## TODOs
+* Re-attach meta info to post, esp. the title
 * Meta info's email should be `Maybe`, and you should use `Either` in parsing
 * Should write a markdown draft tool to make life easier
+* Generalize the `index.html`, so user could provide index.page's content rather than `Main.hs`
+* Maybe the `index.htm`'s generalization could be done with **generalization of "page" idea**
+* Images needs a better sync scheme
 
 ## Spec
 1. Markdown post source format
@@ -28,4 +32,13 @@ The key idea should be that, all information can be build on a single folder con
 	* Web-based editor
 	* Theme system
 
+## Page
+`Page` should be written in Haskell DSL by user. A example for index could be like:
 
+```haskell
+import Plugin as P
+index pages = do
+  H.p $ "Welcome to my blog"
+  P.urlList $ pages
+```
+  

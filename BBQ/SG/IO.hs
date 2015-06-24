@@ -1,12 +1,13 @@
-module IO (
+module BBQ.SG.IO (
     withMarkdownAll,
-    withIndex
+    withIndex,
+    FilePath(..)
 ) where
 
-import Meta
-import Config
+import BBQ.SG.Config
+import BBQ.SG.Meta
 import System.Directory(doesFileExist, getDirectoryContents, copyFile, createDirectoryIfMissing)
-import System.FilePath ((</>), takeExtensions, dropExtensions)
+import System.FilePath (FilePath(..), (</>), takeExtensions, dropExtensions)
 import Data.Text.Lazy.IO (writeFile)
 import Prelude hiding (writeFile)
 import Text.Blaze.Html.Renderer.Text
@@ -25,15 +26,14 @@ getFileList path = do
   names <- getDirectoryContents path
   return $ map dropExtensions $ filter (\name -> takeExtensions name == ".md") names
 
--- foldM :: forall a b (m :: * -> *). Monad m => (a -> b -> m a) -> a -> [b] -> m a
--- b: filename
--- a: MetaInfos
 
-withMarkdownAll f = do
+withMarkdownAll config f = do
     filenames <- getFileList markdownDir
     mapM_ withFileName filenames
     createDirectoryIfMissing True postsDir
   where
+    markdownDir = _markdownDir config
+    postsDir    = _postsDir    config
     withFileName filename = do
         Just str <- readMarkdownFile $ markdownDir </> filename
         case parseMeta str of
@@ -42,11 +42,13 @@ withMarkdownAll f = do
                 writeHtmlFile (postsDir </> filename) (renderHtml html)
             Nothing           -> print $ "parsing metainfo of " ++ filename ++ " failed, not written!"
 
-withIndex f = do
+withIndex config f = do
+    let staticDir = _staticDir config
+    let markdownDir = _markdownDir config
     createDirectoryIfMissing True staticDir
     markdowns <- getFileList $ markdownDir
     html <- f $ zip markdowns (map (\name -> "posts" </> name ++ ".html") markdowns)
     writeHtmlFile (staticDir </> "index") (renderHtml html)
 
 -- Only a stub
-syncImages = copyFile imgSrcDir imgStaDir
+-- syncImages = copyFile imgSrcDir imgStaDir
