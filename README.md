@@ -48,11 +48,12 @@ index posts = do
 
 But you can use the API in other way as well, enjoy blogging :)
 
-## TODOs
-* Re-attach meta info to post, esp. the title
+## Tickets
 * Meta info's email should be `Maybe`, and you should use `Either` in parsing
 * Should write a markdown draft tool to make life easier
 * Images needs a better sync scheme
+* Use `metaDict` to generate some more indexing pages
+* Try add some CSS & JS to your personal blog, so you can know if there is something to be done in managing more kinds of static resource
 
 ## Spec
 1. Markdown post source format

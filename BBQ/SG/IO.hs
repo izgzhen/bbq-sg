@@ -39,7 +39,9 @@ withMarkdownAll config f = do
             createDirectoryIfMissing True postsDir
             mapM_ (\(html, filename) -> writeHtmlFile (postsDir </> filename) (renderHtml html))
                  $ zip (map snd collection) filenames
-            return $ map fst collection
+            return $ zip
+                      (map (\name -> "posts" </> name ++ ".html") filenames)
+                     $ map fst collection
   where
     markdownDir = _markdownDir config
     postsDir    = _postsDir    config
@@ -55,7 +57,7 @@ withIndex config f = do
     let markdownDir = _markdownDir config
     createDirectoryIfMissing True staticDir
     markdowns <- getFileList $ markdownDir
-    html <- f $ zip markdowns (map (\name -> "posts" </> name ++ ".html") markdowns)
+    html <- f
     writeHtmlFile (staticDir </> "index") (renderHtml html)
 
 -- Only a stub

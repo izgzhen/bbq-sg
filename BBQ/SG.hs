@@ -25,6 +25,7 @@ gen ana (text, meta) = htmlTemplate title headers $ do
         H.br
         H.a ! A.href "../index.html"
               $ "Back to index page"
+    copyRight
     mathjax
 
    where mainHtml = markdown def text
@@ -34,11 +35,10 @@ gen ana (text, meta) = htmlTemplate title headers $ do
 runSG config index = do
     let ana = analytics $ _analyticsId config
     -- Generate posts
-    metas <- withMarkdownAll config (gen ana)
-
+    metaDict <- withMarkdownAll config (gen ana)
     -- Generate Index
-    withIndex config $ \pages -> do
-        let mainHtml = index pages -- index is a function provided by user to generate index.html
+    withIndex config $ do
+        let mainHtml = index metaDict -- index is a function provided by user to generate index.html
         let headers = [ ana ]
-        let html = htmlTemplate "Index" headers mainHtml
+        let html = htmlTemplate "Index" headers (mainHtml >> copyRight)
         return html

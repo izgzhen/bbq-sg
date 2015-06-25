@@ -5,10 +5,15 @@ module BBQ.SG.Plugin (
 , mathjax
 , urlList
 , BBQ.SG.Plugin.p
+, _title
+, showMaybe
+, showMaybeStr
+, copyRight
 ) where
 
 import Text.Blaze.Html5 as H
 import Text.Blaze.Html5.Attributes as A
+import BBQ.SG.Meta
 
 analytics analyticsId = H.script $ toMarkup string
   where
@@ -34,3 +39,6 @@ urlList list = H.ul $ do
 -- Re-export part of HTML tags
 p :: ToMarkup a => a -> Html
 p = H.p . toHtml
+
+
+copyRight = H.div $ H.p "Copyright Reserved, Zhen Zhang, 2015"

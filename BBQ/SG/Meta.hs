@@ -19,7 +19,7 @@ instance Show Date where
 data Email = Email String String deriving (Eq)
 
 instance Show Email where
-    show (Email name domain) = "<" ++ name ++ "@" ++ domain ++ ">"
+    show (Email name domain) = "<" ++ name ++ " \\AT " ++ domain ++ ">"
 
 data Contact = Contact_ {
     _name   :: String,
