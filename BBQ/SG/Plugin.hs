@@ -9,11 +9,16 @@ module BBQ.SG.Plugin (
 , showMaybe
 , showMaybeStr
 , copyRight
+, getToday
 ) where
 
 import Text.Blaze.Html5 as H
 import Text.Blaze.Html5.Attributes as A
 import BBQ.SG.Meta
+import Data.Time.Clock
+import Data.Time.Calendar
+
+
 
 analytics analyticsId = H.script $ toMarkup string
   where
@@ -42,3 +47,8 @@ p = H.p . toHtml
 
 
 copyRight = H.div $ H.p "Copyright Reserved, Zhen Zhang, 2015"
+
+getToday = do
+  (y, m, d) <- getCurrentTime >>= return . toGregorian . utctDay
+  return $ show y ++ "." ++ show m ++ "." ++ show d
+
