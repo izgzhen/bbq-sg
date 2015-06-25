@@ -34,11 +34,15 @@ gen ana (text, meta) = htmlTemplate title headers $ do
 
 runSG config index = do
     let ana = analytics $ _analyticsId config
+
     -- Generate posts
     metaDict <- withMarkdownAll config (gen ana)
+
     -- Generate Index
     withIndex config $ do
         let mainHtml = index metaDict -- index is a function provided by user to generate index.html
         let headers = [ ana ]
         let html = htmlTemplate "Index" headers (mainHtml >> copyRight)
         return html
+
+    syncImages config
