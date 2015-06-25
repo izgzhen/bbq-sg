@@ -1,16 +1,16 @@
 BBQ-Static Generator
 ---
 
-BBQ-SG is defined as teh static generator version of a full-fledged CMS. However, I am planning to write most code from scratch rather than inheriting code at the first statge. Maybe in the later period these two system can be combined together.
+BBQ-SG is defined as a static generator of blog posts, like [mine hosted on GitHub Pages](http://blog.zhenzhang.me). It is organized as a library and user can write simple script to drive it.
 
-The key idea should be that, all information can be build on a single folder containing all markdown raw text and its related images, i.e., information should be self-contained rather than hashed into some other place like a DB.
+The key idea behind this tool is that, the whole site can be rebuild from a single folder containing all markdown raw text and its related image. Information should be self-contained and always readable rather than hashed into some other place like a DB.
 
 ## Get started
-I organized my workflow like this:
+I organized my own workflow like this:
 
-Prepare two repos, `static` and `src`, they might not be called that name, but you can `ln -s`.
+Prepare two repos, `static` and `src`, though they might not be called like that, but you can `ln -s`.
 
-In `src`, which has `markdowns` and `images` and some launch `.hs` files which will call the library's interface with `config` attached. For example:
+In `src`, which has `markdowns` and `images` and some scripting `.hs` files which will call the library's interface with `config` attached. For example:
 
 ```haskell
 import BBQ.SG
@@ -49,11 +49,11 @@ index posts = do
 But you can use the API in other way as well, enjoy blogging :)
 
 ## Tickets
-* Images needs a better sync scheme
 * Use `metaDict` to generate some more indexing pages
 * Try add some CSS & JS to your personal blog, so you can know if there is something to be done in managing more kinds of static resource
+* Clean the code, provide a `Plugin` type
 
-## Spec
+## Spec in planning
 1. Markdown post source format
 2. Define the configuration in Haskell DSL
 3. Layout in Hamlet
