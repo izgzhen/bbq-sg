@@ -11,17 +11,23 @@ data Date = Date_ {
     _day    :: Maybe Day,
     _month  :: Month,
     _year   :: Year
-} deriving (Show, Eq)
+} deriving (Eq)
+
+instance Show Date where
+    show (Date_ d m y) = show y ++ "." ++ show m ++ showMaybe d
 
 data Email = Email String String deriving (Eq)
 
 instance Show Email where
-    show (Email name domain) = name ++ "@" ++ domain
+    show (Email name domain) = "<" ++ name ++ "@" ++ domain ++ ">"
 
 data Contact = Contact_ {
     _name   :: String,
     _email  :: Email
-} deriving (Show, Eq)
+} deriving (Eq)
+
+instance Show Contact where
+    show (Contact_ name email) = name ++ "  " ++ show email
 
 data Meta = Meta_ {
     _title  :: Maybe String,
@@ -113,3 +119,10 @@ front = reverse . tail . reverse
 
 clean x xs = let xs' = if head xs == x then tail xs else xs
              in if last xs' == x then front xs' else xs'
+
+showMaybe Nothing   = ""
+showMaybe (Just a) = show a
+
+
+showMaybeStr Nothing  = ""
+showMaybeStr (Just s) = s

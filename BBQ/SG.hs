@@ -14,25 +14,31 @@ import Text.Markdown
 import Text.Blaze.Html5 as H
 import Text.Blaze.Html5.Attributes as A
 
-runSG config index = do
-    -- Generate posts
-    let ana = analytics $ _analyticsId config
-    withMarkdownAll config $ \(text, meta) -> do
-        let mainHtml = markdown def text
-        let headers = [ ana ]
-        let html = htmlTemplate (showMaybe $ _title meta) headers $ do
-                    mainHtml
-                    H.p $ H.a ! A.href "../index.html"
-                              $ "Back to index page"
-                    mathjax
+gen ana (text, meta) = htmlTemplate title headers $ do
+    H.h1 $ toHtml title
+    H.h5 $ toHtml ((showMaybe $ _author meta) ++ (showMaybe $ _date meta))
+    H.hr
+    H.section
+        mainHtml
+    H.p $ do
+        toHtml $ "Tags: " ++ (show $ _tags meta)
+        H.br
+        H.a ! A.href "../index.html"
+              $ "Back to index page"
+    mathjax
 
-        return html
+   where mainHtml = markdown def text
+         title    = showMaybeStr $ _title meta
+         headers  = [ ana ]
+
+runSG config index = do
+    let ana = analytics $ _analyticsId config
+    -- Generate posts
+    metas <- withMarkdownAll config (gen ana)
+
     -- Generate Index
     withIndex config $ \pages -> do
-        let mainHtml = index pages
+        let mainHtml = index pages -- index is a function provided by user to generate index.html
         let headers = [ ana ]
         let html = htmlTemplate "Index" headers mainHtml
         return html
-
-showMaybe Nothing  = ""
-showMaybe (Just a) = show a

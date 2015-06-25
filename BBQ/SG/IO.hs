@@ -12,6 +12,8 @@ import Data.Text.Lazy.IO (writeFile)
 import Prelude hiding (writeFile)
 import Text.Blaze.Html.Renderer.Text
 import Data.Text.Lazy (pack)
+import Control.Monad (foldM)
+import Text.Blaze.Html5 (Html)
 
 readMarkdownFile path = do
     exist <- doesFileExist (path ++ ".md")
@@ -29,18 +31,24 @@ getFileList path = do
 
 withMarkdownAll config f = do
     filenames <- getFileList markdownDir
-    mapM_ withFileName filenames
-    createDirectoryIfMissing True postsDir
+    contents  <- mapM (\filename ->readMarkdownFile $ markdownDir </> filename) filenames
+    case foldr withFile (Just []) contents of  
+        Nothing         -> do print "not good"
+                              return []
+        Just collection -> do
+            createDirectoryIfMissing True postsDir
+            mapM_ (\(html, filename) -> writeHtmlFile (postsDir </> filename) (renderHtml html))
+                 $ zip (map snd collection) filenames
+            return $ map fst collection
   where
     markdownDir = _markdownDir config
     postsDir    = _postsDir    config
-    withFileName filename = do
-        Just str <- readMarkdownFile $ markdownDir </> filename
-        case parseMeta str of
-            Just (meta, str') -> do
-                html <- f (pack str', meta)
-                writeHtmlFile (postsDir </> filename) (renderHtml html)
-            Nothing           -> print $ "parsing metainfo of " ++ filename ++ " failed, not written!"
+    withFile :: (Maybe String) -> Maybe [(Meta, Html)] -> Maybe [(Meta, Html)]
+    withFile maybeContent mPairs = do -- Maybe
+        pairs        <- mPairs
+        content      <- maybeContent
+        (meta, str') <- parseMeta content
+        return $ (meta, f (pack str', meta)) : pairs
 
 withIndex config f = do
     let staticDir = _staticDir config
