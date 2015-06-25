@@ -5,11 +5,12 @@ module BBQ.SG.Plugin (
 , mathjax
 , urlList
 , BBQ.SG.Plugin.p
-, _title
 , showMaybe
 , showMaybeStr
 , copyRight
 , getToday
+, BBQ.SG.Plugin.a
+, Meta(..)
 ) where
 
 import Text.Blaze.Html5 as H
@@ -44,6 +45,10 @@ urlList list = H.ul $ do
 -- Re-export part of HTML tags
 p :: ToMarkup a => a -> Html
 p = H.p . toHtml
+
+a :: (ToMarkup a, ToValue b) => a -> b -> Html
+a text addr = H.a ! A.href (toValue addr)
+                  $ toHtml text
 
 
 copyRight = H.div $ H.p "Copyright Reserved, Zhen Zhang, 2015"

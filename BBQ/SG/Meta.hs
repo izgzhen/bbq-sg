@@ -1,6 +1,7 @@
 module BBQ.SG.Meta where
 import Data.List.Extra (splitOn)
 import Data.List(sort, group)
+import System.FilePath(FilePath)
 -- Haskell's Date lib is awkward to use
 
 type Day   = Int
@@ -33,7 +34,8 @@ data Meta = Meta_ {
     _title  :: Maybe String,
     _date   :: Maybe Date,
     _author :: Maybe Contact,
-    _tags   :: [String]
+    _tags   :: [String],
+    _path   :: FilePath
 } deriving (Show, Eq)
 
 --------------------------------------------------------
@@ -43,8 +45,8 @@ parseMeta str = do
     let lns = lines str
     -- First line is supposed to be title when second line is '---'
     case lns of
-        title:"---":rest -> parseMetaItems (Meta_ (Just title) Nothing Nothing [], rest)
-        rest             -> parseMetaItems (Meta_ Nothing      Nothing Nothing [], rest)
+        title:"---":rest -> parseMetaItems (Meta_ (Just title) Nothing Nothing [] "", rest)
+        rest             -> parseMetaItems (Meta_ Nothing      Nothing Nothing [] "", rest)
 
 type EitherS = Either String -- Left is the error info
 
@@ -70,21 +72,21 @@ eat identifier eatF (m, lns) = do
             return (m', a ++ notSelected)
         _ -> return (m, a)
 
-eatDate m@(Meta_ t _ a tg) wds =
+eatDate m@(Meta_ t _ a tg p) wds =
     if length wds == 0 then return m
     else do
         d <- toDate $ head wds
-        return $ Meta_ t (Just d) a tg
+        return $ Meta_ t (Just d) a tg p
 
-eatAuthor m@(Meta_ t d _ tg) nameAndEmail = do
+eatAuthor m@(Meta_ t d _ tg p) nameAndEmail = do
     let (name, email) = (front nameAndEmail, last nameAndEmail)
     email' <- toEmail email
     let a = Contact_ (unwords name) email'
-    return $ Meta_ t d (Just a) tg
+    return $ Meta_ t d (Just a) tg p
 
-eatTags  m@(Meta_ t d a _) xs = do
+eatTags  m@(Meta_ t d a _ p) xs = do
     let xs' = unique . map (clean ' ') . splitOn "," $ unwords xs
-    return $ Meta_ t d a xs'
+    return $ Meta_ t d a xs' p
 
 --------------------------------------------------------
 

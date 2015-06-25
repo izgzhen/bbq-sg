@@ -17,7 +17,8 @@ library
   other-modules:       BBQ.SG.IO,
                        BBQ.SG.Template,
                        BBQ.SG.Meta,
-                       BBQ.SG.Config
+                       BBQ.SG.Config,
+                       BBQ.SG.More
   other-extensions:    OverloadedStrings
   build-depends:       base >=4.7 && <4.8,
                        markdown >=0.1 && <0.2,

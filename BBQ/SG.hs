@@ -36,13 +36,19 @@ runSG config index = do
     let ana = analytics $ _analyticsId config
 
     -- Generate posts
-    metaDict <- withMarkdownAll config (gen ana)
+    metas <- withMarkdownAll config (gen ana)
 
     -- Generate Index
     withIndex config $ do
-        let mainHtml = index metaDict -- index is a function provided by user to generate index.html
+        let mainHtml = index metas -- index is a function provided by user to generate index.html
         let headers = [ ana ]
         let html = htmlTemplate "Index" headers (mainHtml >> copyRight)
+        return html
+
+    -- Generate Tag Index
+    genTagsIndex config metas $ \mainHtml -> do
+        let headers = [ ana ]
+        let html    = htmlTemplate "Tags" headers (mainHtml >> copyRight)
         return html
 
     syncImages config
