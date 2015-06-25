@@ -19,8 +19,8 @@ readMarkdownFile path = do
     exist <- doesFileExist (path ++ ".md")
     if exist then do
         text <- readFile (path ++ ".md")
-        return $ Just text
-        else return Nothing
+        return $ Right text
+        else return $ Left ("Reading " ++ show path ++ " failed")
 
 writeHtmlFile filename = writeFile (filename ++ ".html")
 
@@ -32,10 +32,10 @@ getFileList path = do
 withMarkdownAll config f = do
     filenames <- getFileList markdownDir
     contents  <- mapM (\filename ->readMarkdownFile $ markdownDir </> filename) filenames
-    case foldr withFile (Just []) contents of  
-        Nothing         -> do print "not good"
+    case foldr withFile (Right []) contents of  
+        Left errMsg     -> do print $ "Error: " ++ errMsg
                               return []
-        Just collection -> do
+        Right collection -> do
             createDirectoryIfMissing True postsDir
             mapM_ (\(html, filename) -> writeHtmlFile (postsDir </> filename) (renderHtml html))
                  $ zip (map snd collection) filenames
@@ -45,8 +45,8 @@ withMarkdownAll config f = do
   where
     markdownDir = _markdownDir config
     postsDir    = _postsDir    config
-    withFile :: (Maybe String) -> Maybe [(Meta, Html)] -> Maybe [(Meta, Html)]
-    withFile maybeContent mPairs = do -- Maybe
+    withFile :: (EitherS String) -> EitherS [(Meta, Html)] -> EitherS [(Meta, Html)]
+    withFile maybeContent mPairs = do
         pairs        <- mPairs
         content      <- maybeContent
         (meta, str') <- parseMeta content

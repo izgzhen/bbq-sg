@@ -46,7 +46,9 @@ parseMeta str = do
         title:"---":rest -> parseMetaItems (Meta_ (Just title) Nothing Nothing [], rest)
         rest             -> parseMetaItems (Meta_ Nothing      Nothing Nothing [], rest)
 
-type Parser = (Meta, [String]) -> Maybe (Meta, String)
+type EitherS = Either String -- Left is the error info
+
+type Parser = (Meta, [String]) -> EitherS (Meta, String)
 
 parseMetaItems :: Parser
 parseMetaItems (m, lns) = do
@@ -58,7 +60,7 @@ parseMetaItems (m, lns) = do
     (m', _) <- parse (m, items')
     return (m', concat $ map (++ "\n") rest)
 
-eat :: String -> (Meta -> [String] -> Maybe Meta) -> (Meta, [[String]]) -> Maybe (Meta, [[String]])
+eat :: String -> (Meta -> [String] -> EitherS Meta) -> (Meta, [[String]]) -> EitherS (Meta, [[String]])
 eat identifier eatF (m, lns) = do
     let (a, b) = span (\wds -> head wds /= identifier) lns
     case b of
@@ -69,7 +71,7 @@ eat identifier eatF (m, lns) = do
         _ -> return (m, a)
 
 eatDate m@(Meta_ t _ a tg) wds =
-    if length wds == 0 then Nothing
+    if length wds == 0 then return m
     else do
         d <- toDate $ head wds
         return $ Meta_ t (Just d) a tg
@@ -86,14 +88,14 @@ eatTags  m@(Meta_ t d a _) xs = do
 
 --------------------------------------------------------
 
-toEmail :: String -> Maybe Email
-toDate  :: String -> Maybe Date
+toEmail :: String -> EitherS Email
+toDate  :: String -> EitherS Date
 
 toEmail str = case span (/= '@') str of
-    (name, '@':domain) -> Just $ Email name' domain'
+    (name, '@':domain) -> return $ Email name' domain'
                            where name'   = clean '<' name
                                  domain' = clean '>' domain
-    _ -> Nothing
+    _ -> fail $ "email \"" ++ str ++ "\" is not legal"
 
 toDate str = case splitOn "." str of
     (year:month:rest)     -> do
@@ -104,12 +106,12 @@ toDate str = case splitOn "." str of
             d:[] -> do
                 day' <- checkRange 1 30 d
                 return $ Date_ (Just day') month' year'
-            _    -> Nothing
-    _ -> Nothing
+            _    -> fail $ "date \"" ++ str ++ "\" is not legal"
+    _ -> fail $ "date \"" ++ str ++ "\" is not legal"
 
 checkRange l h str = let i = read str :: Int
-                     in if i >= l && i <= h then Just i
-                         else Nothing
+                     in if i >= l && i <= h then return i
+                         else fail $ str ++ " is not in range (" ++ show l ++ ", " ++ show h ++ ")"
 
 unique :: (Eq a, Ord a) => [a] -> [a]
 unique = map (\(x:_) -> x) . group . sort
