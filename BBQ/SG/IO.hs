@@ -3,7 +3,8 @@ module BBQ.SG.IO (
     withIndex,
     genTagsIndex,
     FilePath(..),
-    syncImages
+    syncImages,
+    getJsCSS
 ) where
 
 import BBQ.SG.Config
@@ -65,36 +66,57 @@ withIndex config f = do
     html <- f
     writeHtmlFile (staticDir </> "index") (renderHtml html)
 
-
 syncImages config = do
     print "Sync images ..."
-    let imgSrcDir = _imgSrcDir config
-    let imgStaDir = _imgStaDir config
-    imagesSrc <- fromList . map fst <$> getFileDict imgSrcDir
-    imagesSta <- fromList . map (dropFirstDir $ _staticDir config) . map fst <$> getFileDict imgStaDir
+    syncResource (_imgSrcDir config) (_imgStaDir config) (_staticDir config)
 
-    let notInSrc = toList $ difference imagesSta imagesSrc
-    let notInSta = toList $ difference imagesSrc imagesSta
+
+syncJs config = do
+    print "Sync JavaScripts ..."
+    syncResource (_jsSrcDir config) (_jsStaDir config) (_staticDir config)
+
+syncCss config = do
+    print "Sync CSS ..."
+    syncResource (_cssSrcDir config) (_cssStaDir config) (_staticDir config)
+
+getResource path ext = do
+    names <- getDirectoryContents path
+    return $ filter (\name -> takeExtensions name == ext) names
+
+getJsCSS config = do
+    syncJs config
+    syncCss config
+    js  <- getResource (_jsSrcDir config) ".js"
+    css <- getResource (_cssSrcDir config) ".css"
+    return (js, css)
+
+syncResource srcDir staDir prefix = do
+
+    src    <- fromList . map fst <$> getFileDict srcDir
+    static <- fromList . map (dropFirstDir prefix) . map fst <$> getFileDict staDir
+
+    let notInSrc = toList $ difference static src
+    let notInSta = toList $ difference src static
     mapM_ (\invalid -> do
                 print $ "remove invalid " ++ show invalid
                 removeFile $ invalid
           ) notInSrc
     mapM_ (\new     -> do
                 print $ "add new " ++ show new
-                copyFile new (_staticDir config </> new)
+                copyFile new (prefix </> new)
           ) notInSta
 
-    let common = toList $ intersection imagesSta imagesSrc
+    let common = toList $ intersection src static
 
     mapM_ (\commonPath -> do
                 srcSize <- getFileSize commonPath
-                staSize <- getFileSize (_staticDir config </> commonPath)
+                staSize <- getFileSize (prefix </> commonPath)
                 -- srcMod  <- getModificationTime commonPath
                 -- staMod  <- getModificationTime (_staticDir config </> commonPath)
 
                 if srcSize /= staSize then do
-                        print $ "updating " ++ show (_staticDir config </> commonPath) ++ " with " ++ show commonPath
-                        copyFile commonPath (_staticDir config </> commonPath)
+                        print $ "updating " ++ show (prefix </> commonPath) ++ " with " ++ show commonPath
+                        copyFile commonPath (prefix </> commonPath)
                     else return ()
           ) common
 
@@ -111,3 +133,4 @@ getFileDict path = do
 
 -- example: "./static/img" -> "./img" with "./static" to drop
 dropFirstDir prefix str   = "." ++ (head . tail $ splitOn prefix str)
+

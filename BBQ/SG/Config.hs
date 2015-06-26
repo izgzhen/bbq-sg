@@ -6,5 +6,9 @@ data Config = Config_ {
     _imgSrcDir   :: FilePath,
     _postsDir    :: FilePath,
     _imgStaDir   :: FilePath,
+    _jsSrcDir    :: FilePath,
+    _jsStaDir    :: FilePath,
+    _cssSrcDir   :: FilePath,
+    _cssStaDir   :: FilePath,
     _analyticsId :: String
 }

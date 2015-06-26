@@ -49,8 +49,6 @@ index posts = do
 But you can use the API in other way as well, enjoy blogging :)
 
 ## Tickets
-* Use `metaDict` to generate some more indexing pages
-* Try add some CSS & JS to your personal blog, so you can know if there is something to be done in managing more kinds of static resource
 * Clean the code, provide a `Plugin` type
 
 ## Spec in planning

@@ -11,6 +11,8 @@ module BBQ.SG.Plugin (
 , getToday
 , BBQ.SG.Plugin.a
 , Meta(..)
+, scriptList
+, cssList
 ) where
 
 import Text.Blaze.Html5 as H
@@ -56,4 +58,17 @@ copyRight = H.div $ H.p "Copyright Reserved, Zhen Zhang, 2015"
 getToday = do
   (y, m, d) <- getCurrentTime >>= return . toGregorian . utctDay
   return $ show y ++ "." ++ show m ++ "." ++ show d
+
+
+
+scriptList scripts = mapM_ (\s -> H.script ! A.type_ "text/javascript"
+                                           ! A.src   (toValue s)
+                                           $ ""
+                           ) scripts
+
+
+cssList csses = mapM_ (\c -> H.link ! A.href  (toValue c)
+                                    ! A.rel   "stylesheet"
+                                    ! A.type_ "text/css"
+                      ) csses
 
