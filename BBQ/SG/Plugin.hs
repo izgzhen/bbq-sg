@@ -15,6 +15,7 @@ module BBQ.SG.Plugin (
 , Meta(..)
 , scriptList
 , cssList
+, showKeyWords
 ) where
 
 import Text.Blaze.Html5 as H
@@ -23,7 +24,7 @@ import BBQ.SG.Meta
 import Data.Time.Clock
 import Data.Time.Calendar
 import BBQ.SG.Misc
-
+import qualified Data.Map as M
 
 type Plugin  a = a -> Html
 type Snippet   = Html
@@ -82,3 +83,6 @@ cssList csses = mapM_ (\c -> H.link ! A.href  (toValue c)
                                     ! A.type_ "text/css"
                       ) csses
 
+
+showKeyWords :: Plugin (M.Map String Int)
+showKeyWords keywords = H.p $ toHtml $ show keywords

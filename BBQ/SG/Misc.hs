@@ -5,7 +5,7 @@ import Control.Monad
 import System.Directory
 import System.FilePath (FilePath(..), (</>), takeExtensions, dropExtensions)
 import System.Posix
-import Data.List.Extra(splitOn)
+import Data.List.Extra (splitOn)
 import Data.List (group, sort)
 
 unique :: (Eq a, Ord a) => [a] -> [a]

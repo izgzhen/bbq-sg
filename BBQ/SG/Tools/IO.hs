@@ -11,6 +11,7 @@ import Data.Set (fromList, intersection, difference, toList)
 import BBQ.SG.Config
 import BBQ.SG.Meta
 import BBQ.SG.Tools.Parser
+import BBQ.SG.Tools.AutoKeywords
 import Text.Blaze.Html.Renderer.Text
 import Data.Text.Lazy (Text, pack)
 import System.Directory
@@ -19,6 +20,7 @@ import Control.Applicative((<$>))
 import Control.Monad
 import Text.Blaze.Html5 (Html)
 import Prelude hiding (writeFile)
+import qualified Data.Map as M
 import Data.Text.Lazy.IO (writeFile)
 
 prepareFolders config = mapM_ (createDirectoryIfMissing True)
@@ -29,7 +31,7 @@ prepareFolders config = mapM_ (createDirectoryIfMissing True)
                                   , _cssStaDir
                                   ]
 
-withMarkdownsAll :: Config -> ((Text, Meta) -> Html) -> IO [Meta]
+withMarkdownsAll :: Config -> ((Text, Meta) -> M.Map FilePath Int -> Html) -> IO [Meta]
 withMarkdownsAll config processor = do
     print "Generating posts..."
 
@@ -37,7 +39,9 @@ withMarkdownsAll config processor = do
 
     contents  <- mapM (\filename -> readFileMaybe $ markdownDir </> filename ++ ".md") filenames
 
-    case foldr withFile (Right []) (zip contents (map (\fn -> "posts" </> fn ++ ".html") filenames)) of
+    keywordsGroup <- generateKeyWords $ _markdownDir config
+
+    case foldr (withFile $ M.fromList keywordsGroup) (Right []) (zip contents filenames) of
         Left errMsg      -> do print $ "Error: " ++ errMsg
                                return []
         Right collection -> do
@@ -47,13 +51,15 @@ withMarkdownsAll config processor = do
   where
     markdownDir = _markdownDir config
     postsDir    = _postsDir    config
-    withFile :: (EitherS String, FilePath) -> EitherS [(Meta, Html)] -> EitherS [(Meta, Html)]
-    withFile (maybeContent, path) mPairs = do
+    withFile :: M.Map FilePath (M.Map String Int) -> (EitherS String, FilePath) -> EitherS [(Meta, Html)] -> EitherS [(Meta, Html)]
+    withFile keywordsGroup (maybeContent, path) mPairs = do
         pairs        <- mPairs
         content      <- maybeContent
         (Meta_ t d a tg _, str') <- parseMeta content
-        let meta = Meta_ t d a tg path
-        return $ (meta, processor (pack str', meta)) : pairs
+        let meta = Meta_ t d a tg $ "posts" </> path ++ ".html"
+        let mdpath = markdownDir </> path ++ ".md"
+        let Just keywords = M.lookup mdpath keywordsGroup
+        return $ (meta, processor (pack str', meta) keywords) : pairs
 
 withPage name config f = do
     print $ "Generating page " ++ name ++ " ..."

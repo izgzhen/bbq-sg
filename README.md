@@ -50,12 +50,13 @@ But you can use the API in other way as well, enjoy blogging :)
 
 ## Tickets
 * Maybe except for templates, all `H.XXX` should be provided by user?
+* How to Extract a synopsis out of markdown text?
+* URLibrary
 
 
 ## Features in planning
-* Spell checking
 * Content analyzing -- To generate tags, synopsis automatically
-* Collect all URL/Images appeared in the posts
+* Collect all URL appeared in the posts
 * Revision history by analyzing git commits
 * Theme system
 

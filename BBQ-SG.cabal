@@ -22,7 +22,9 @@ library
                        BBQ.SG.Config,
                        BBQ.SG.Components.HomePage,
                        BBQ.SG.Components.Posts,
-                       BBQ.SG.Components.Tags
+                       BBQ.SG.Components.Tags,
+                       BBQ.SG.Tools.AutoKeywords,
+                       BBQ.SG.Tools.WordCount
 
   other-extensions:    OverloadedStrings
   build-depends:       base >=4.7 && <4.8,

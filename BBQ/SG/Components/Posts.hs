@@ -8,9 +8,9 @@ import Text.Blaze.Html5 as H
 import Text.Blaze.Html5.Attributes as A
 import Text.Markdown
 
-postGen headers config = withMarkdownsAll config $ f headers
+postGen headers config = withMarkdownsAll config (f headers)
 
-f headers (text, meta) = htmlTemplate title headers html
+f headers (text, meta) keywords = htmlTemplate title headers html
     where
         mainHtml = markdown def text
         title    = showMaybeStr $ _title meta
@@ -27,4 +27,5 @@ f headers (text, meta) = htmlTemplate title headers html
                         $ "Back to index page"
                 copyRight
                 mathjax
+                showKeyWords keywords
 
