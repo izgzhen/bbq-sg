@@ -1,7 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module BBQ.SG.Plugin (
-  analytics
+  Plugin
+, Snippet
+, analytics
 , mathjax
 , urlList
 , BBQ.SG.Plugin.p
@@ -20,9 +22,14 @@ import Text.Blaze.Html5.Attributes as A
 import BBQ.SG.Meta
 import Data.Time.Clock
 import Data.Time.Calendar
+import BBQ.SG.Misc
 
 
+type Plugin  a = a -> Html
+type Snippet   = Html
 
+
+analytics :: Plugin String
 analytics analyticsId = H.script $ toMarkup string
   where
     string :: String
@@ -33,13 +40,14 @@ analytics analyticsId = H.script $ toMarkup string
             "})(window,document,'script','//www.google-analytics.com/analytics.js','ga');" ++
             "ga('create', '" ++ analyticsId ++ "', 'auto'); ga('send', 'pageview');"
 
-
+mathjax :: Snippet
 mathjax = do
             H.script ! A.type_ "text/javascript"
                      ! A.src   "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" $ ""
             H.script ! A.type_ "text/x-mathjax-config" $ "MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\\\(','\\\\)']]} });"
 
 
+urlList :: Plugin [(String, FilePath)]
 urlList list = H.ul $ do
                 let itemize (name, url) = H.li $ H.a ! A.href (H.toValue url) $ H.toHtml name
                 mapM_ itemize list
@@ -53,6 +61,7 @@ a text addr = H.a ! A.href (toValue addr)
                   $ toHtml text
 
 
+copyRight :: Snippet
 copyRight = H.div $ H.p "Copyright Reserved, Zhen Zhang, 2015"
 
 getToday = do
@@ -61,12 +70,13 @@ getToday = do
 
 
 
+scriptList :: Plugin [FilePath]
 scriptList scripts = mapM_ (\s -> H.script ! A.type_ "text/javascript"
                                            ! A.src   (toValue s)
                                            $ ""
                            ) scripts
 
-
+cssList :: Plugin [FilePath]
 cssList csses = mapM_ (\c -> H.link ! A.href  (toValue c)
                                     ! A.rel   "stylesheet"
                                     ! A.type_ "text/css"

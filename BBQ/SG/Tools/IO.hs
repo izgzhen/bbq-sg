@@ -1,49 +1,47 @@
-module BBQ.SG.IO (
-    withMarkdownAll,
-    withIndex,
-    genTagsIndex,
-    FilePath(..),
-    syncImages,
-    getJsCSS
+module BBQ.SG.Tools.IO (
+  prepareFolders   
+, withMarkdownsAll
+, withPage
+, syncImages
+, getJsCSS
 ) where
 
+import BBQ.SG.Misc
+import Data.Set (fromList, intersection, difference, toList)
 import BBQ.SG.Config
 import BBQ.SG.Meta
-import BBQ.SG.More
-import System.Directory
-import System.FilePath (FilePath(..), (</>), takeExtensions, dropExtensions)
+import BBQ.SG.Tools.Parser
 import Text.Blaze.Html.Renderer.Text
-import Data.Text.Lazy (pack)
-import Control.Monad
+import Data.Text.Lazy (Text, pack)
+import System.Directory
+import System.FilePath
 import Control.Applicative((<$>))
-import Data.Set (fromList, intersection, difference, toList)
+import Control.Monad
 import Text.Blaze.Html5 (Html)
-import System.Posix
-import Data.List.Extra(splitOn)
+import Prelude hiding (writeFile)
+import Data.Text.Lazy.IO (writeFile)
 
-readMarkdownFile path = do
-    exist <- doesFileExist (path ++ ".md")
-    if exist then do
-        text <- readFile (path ++ ".md")
-        return $ Right text
-        else return $ Left ("Reading " ++ show path ++ " failed")
+prepareFolders config = mapM_ (createDirectoryIfMissing True)
+                            $ map (\f -> f config)
+                                  [ _postsDir
+                                  , _imgStaDir
+                                  , _jsStaDir
+                                  , _cssStaDir
+                                  ]
 
-
-getFileList path = do
-  names <- getDirectoryContents path
-  return $ map dropExtensions $ filter (\name -> takeExtensions name == ".md") names
-
-withMarkdownAll config f = do
+withMarkdownsAll :: Config -> ((Text, Meta) -> Html) -> IO [Meta]
+withMarkdownsAll config processor = do
     print "Generating posts..."
-    filenames <- getFileList markdownDir
 
-    contents  <- mapM (\filename ->readMarkdownFile $ markdownDir </> filename) filenames
+    filenames <- map dropExtensions <$> getFilesEndWith markdownDir ".md"
+
+    contents  <- mapM (\filename -> readFileMaybe $ markdownDir </> filename ++ ".md") filenames
+
     case foldr withFile (Right []) (zip contents (map (\fn -> "posts" </> fn ++ ".html") filenames)) of
-        Left errMsg     -> do print $ "Error: " ++ errMsg
-                              return []
+        Left errMsg      -> do print $ "Error: " ++ errMsg
+                               return []
         Right collection -> do
-            createDirectoryIfMissing True postsDir
-            mapM_ (\(html, filename) -> writeHtmlFile (postsDir </> filename) (renderHtml html))
+            mapM_ (\(html, filename) -> writeFile (postsDir </> filename ++ ".html") (renderHtml html))
                  $ zip (map snd collection) filenames
             return $ map fst collection
   where
@@ -55,21 +53,16 @@ withMarkdownAll config f = do
         content      <- maybeContent
         (Meta_ t d a tg _, str') <- parseMeta content
         let meta = Meta_ t d a tg path
-        return $ (meta, f (pack str', meta)) : pairs
+        return $ (meta, processor (pack str', meta)) : pairs
 
-withIndex config f = do
-    print "Generating index..."
-    let staticDir = _staticDir config
-    let markdownDir = _markdownDir config
-    createDirectoryIfMissing True staticDir
-    markdowns <- getFileList $ markdownDir
+withPage name config f = do
+    print $ "Generating page " ++ name ++ " ..."
     html <- f
-    writeHtmlFile (staticDir </> "index") (renderHtml html)
+    writeFile (_staticDir config </> name ++ ".html") (renderHtml html)
 
 syncImages config = do
     print "Sync images ..."
     syncResource (_imgSrcDir config) (_imgStaDir config) (_staticDir config)
-
 
 syncJs config = do
     print "Sync JavaScripts ..."
@@ -79,15 +72,12 @@ syncCss config = do
     print "Sync CSS ..."
     syncResource (_cssSrcDir config) (_cssStaDir config) (_staticDir config)
 
-getResource path ext = do
-    names <- getDirectoryContents path
-    return $ filter (\name -> takeExtensions name == ext) names
 
 getJsCSS config = do
     syncJs config
     syncCss config
-    js  <- getResource (_jsSrcDir config) ".js"
-    css <- getResource (_cssSrcDir config) ".css"
+    js  <- getFilesEndWith (_jsSrcDir config) ".js"
+    css <- getFilesEndWith (_cssSrcDir config) ".css"
     return (js, css)
 
 syncResource srcDir staDir prefix = do
@@ -120,17 +110,6 @@ syncResource srcDir staDir prefix = do
                     else return ()
           ) common
 
-getFileSize path = getFileStatus path >>= \s -> return $ fileSize s
-
-getFileDict path = do
-    contents <- (filter (\n -> n /= "." && n /= "..")) <$> getDirectoryContents path
-    let contentsDict = zip (map (path </>) contents) contents
-    dirs     <- filterM doesDirectoryExist $ map fst contentsDict
-    files    <- filterM (doesFileExist . fst) contentsDict
-    dict     <- concat <$> mapM getFileDict dirs
-    return $ dict ++ files
 
 
--- example: "./static/img" -> "./img" with "./static" to drop
-dropFirstDir prefix str   = "." ++ (head . tail $ splitOn prefix str)
 

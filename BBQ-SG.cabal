@@ -1,5 +1,5 @@
 name:                BBQ-SG
-version:             0.1.0.0
+version:             0.2.0.0
 -- synopsis:            
 -- description:         
 license:             MIT
@@ -14,11 +14,16 @@ cabal-version:       >=1.10
 library
   exposed-modules:     BBQ.SG,
                        BBQ.SG.Plugin
-  other-modules:       BBQ.SG.IO,
+  other-modules:       BBQ.SG.Tools.IO,
+                       BBQ.SG.Misc,
+                       BBQ.SG.Tools.Parser,
                        BBQ.SG.Template,
                        BBQ.SG.Meta,
                        BBQ.SG.Config,
-                       BBQ.SG.More
+                       BBQ.SG.Components.HomePage,
+                       BBQ.SG.Components.Posts,
+                       BBQ.SG.Components.Tags
+
   other-extensions:    OverloadedStrings
   build-depends:       base >=4.7 && <4.8,
                        markdown >=0.1 && <0.2,

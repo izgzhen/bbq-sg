@@ -5,32 +5,17 @@ module BBQ.SG (
 , runSG
 ) where
 
-import BBQ.SG.IO
 import BBQ.SG.Plugin
 import BBQ.SG.Template
 import BBQ.SG.Meta
 import BBQ.SG.Config
-import Text.Markdown
 import Text.Blaze.Html5 as H hiding (map)
 import System.FilePath((</>))
 import Text.Blaze.Html5.Attributes as A
-
-gen headers (text, meta) = htmlTemplate title headers $ do
-    H.h1 $ toHtml title
-    H.h5 $ toHtml ((showMaybe $ _author meta) ++ (showMaybe $ _date meta))
-    H.hr
-    H.section
-        mainHtml
-    H.p $ do
-        toHtml $ "Tags: " ++ (show $ _tags meta)
-        H.br
-        H.a ! A.href "../index.html"
-              $ "Back to index page"
-    copyRight
-    mathjax
-
-   where mainHtml = markdown def text
-         title    = showMaybeStr $ _title meta
+import BBQ.SG.Components.Posts
+import BBQ.SG.Components.HomePage
+import BBQ.SG.Components.Tags
+import BBQ.SG.Tools.IO
 
 runSG config index = do
     (js, css) <- getJsCSS config
@@ -40,21 +25,19 @@ runSG config index = do
     let postCssRoutes  = map (".." </>) indexCssRoutes
 
     let ana = analytics $ _analyticsId config
+    let indexHeaders = [ ana, scriptList indexJsRoutes, cssList indexCssRoutes ]
 
+    -- Mkdir if void
+    prepareFolders config
 
-    -- Generate posts
-    metas <- withMarkdownAll config (gen [ana, scriptList postJsRoutes, cssList postCssRoutes])
+    -- Generate posts and collect meta info
+    metas <- postGen [ ana, scriptList postJsRoutes, cssList postCssRoutes ] config
 
-    -- Generate Index
-    withIndex config $ do
-        let headers = [ ana, scriptList indexJsRoutes, cssList indexCssRoutes ]
-        let mainHtml = index metas -- index is a function provided by user to generate index.html
-        let html = htmlTemplate "Index" headers (mainHtml >> copyRight)
-        return html
+    -- Generate Homepage
+    homePageGen indexHeaders index config metas
 
-    -- Generate Tag Index
-    genTagsIndex config metas $ \mainHtml -> do
-        let headers = [ ana, scriptList indexJsRoutes, cssList indexCssRoutes ]
-        return $ htmlTemplate "Tags" headers (mainHtml >> copyRight)
+    -- Generate Tags page
+    tagsGen indexHeaders config metas
 
+    -- Sync Images
     syncImages config

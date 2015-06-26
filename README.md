@@ -1,7 +1,7 @@
-BBQ-Static Generator
+BBQ Static Generator
 ---
 
-BBQ-SG is defined as a static generator of blog posts, like [mine hosted on GitHub Pages](http://blog.zhenzhang.me). It is organized as a library and user can write simple script to drive it.
+BBQ-SG is defined as a static generator of blog posts (not barbecue), like [mine hosted on GitHub Pages](http://blog.zhenzhang.me). It is organized as a library and user can write simple script to drive it.
 
 The key idea behind this tool is that, the whole site can be rebuild from a single folder containing all markdown raw text and its related image. Information should be self-contained and always readable rather than hashed into some other place like a DB.
 
@@ -49,23 +49,29 @@ index posts = do
 But you can use the API in other way as well, enjoy blogging :)
 
 ## Tickets
-* Clean the code, provide a `Plugin` type
+* Maybe except for templates, all `H.XXX` should be provided by user?
 
-## Spec in planning
-1. Markdown post source format
-2. Define the configuration in Haskell DSL
-3. Layout in Hamlet
-4. Use Haskell to maintain a meta-info db to support
-	* Tagging
-	* Archiving
-4. Consider more amazing features
-	* Spell Checking
-	* Content analyzing -- To generate tags, synopsis automatically
-	* Plugins
-	* Link Hub -- Collect all URL appeared in the post
-	* Review History by analyzing git commits
-5. Combine with Dynamic BBQ
-	* Real-time preview + Publish
-	* Web-based editor
-	* Theme system
+
+## Features in planning
+* Spell checking
+* Content analyzing -- To generate tags, synopsis automatically
+* Collect all URL/Images appeared in the posts
+* Revision history by analyzing git commits
+* Theme system
+
+
+## Structure
+You can think there are five abstract layers:
+
+1. Driver
+2. Interface
+3. Components
+4. Tools
+5. Definitions
+
+The users write `driver` code, and call the `interface`, which is composed of `components`, like `posts`, `tags`, `homepage` etc. But the realization of components needs a lot of tools, like `syncResource`, `parseMeta`, `getFileList` and `getMarkdowns`, which interacts with file system and processing texts, all nitty-gritty tools. The `Definitions` defines the configuration items and meta info of a post. Mostly declarations.
+
+
+
+
 

@@ -1,13 +1,11 @@
-module BBQ.SG.More where
-import Data.Map as M hiding (foldr, map)
+module BBQ.SG.Components.Tags (tagsGen) where
+import BBQ.SG.Meta
 import Text.Blaze.Html5 as H hiding (map)
 import Text.Blaze.Html5.Attributes as A
-import BBQ.SG.Plugin as P
-import Text.Blaze.Html.Renderer.Text
 import BBQ.SG.Template
-import BBQ.SG.Config
-import Data.Text.Lazy.IO (writeFile)
-import Prelude hiding (writeFile)
+import Data.Map as M hiding (foldr, map)
+import BBQ.SG.Tools.IO
+import BBQ.SG.Plugin as P
 
 collectTags :: Meta -> M.Map String [Meta] -> M.Map String [Meta]
 collectTags meta m = foldr (f meta) m (_tags meta)
@@ -20,9 +18,9 @@ collectTags meta m = foldr (f meta) m (_tags meta)
                     Nothing    -> [meta]
                     Just metas -> meta : metas
 
-genTagsIndex config metas f = do
-    print "Generating tags index file..."
-    -- forall a b. (a -> b -> b) -> b -> [a] -> b
+
+tagsGen headers config metas = withPage "tags" config $ do
+    
     let m = foldr collectTags M.empty metas
     let infoDict = map (\tag -> let (Just metas) = M.lookup tag m
                                 in (tag, map (\meta@(Meta_ (Just t) _ _ _ p) -> (t, p)) metas)
@@ -32,8 +30,8 @@ genTagsIndex config metas f = do
                         H.h4 $ toHtml tag
                         P.urlList list
                          ) infoDict
-    html <- f mainHtml
-    writeHtmlFile ((_staticDir config) ++ "/tags") (renderHtml html)
 
+    let html = htmlTemplate "Index" headers (mainHtml >> P.copyRight)
 
-writeHtmlFile filename = writeFile (filename ++ ".html")
+    return html
+
