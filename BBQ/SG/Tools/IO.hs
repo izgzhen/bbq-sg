@@ -12,6 +12,7 @@ import BBQ.SG.Config
 import BBQ.SG.Meta
 import BBQ.SG.Tools.Parser
 import BBQ.SG.Tools.AutoKeywords
+import BBQ.SG.Tools.Synopsis
 import Text.Blaze.Html.Renderer.Text
 import Data.Text.Lazy (Text, pack)
 import System.Directory
@@ -31,7 +32,7 @@ prepareFolders config = mapM_ (createDirectoryIfMissing True)
                                   , _cssStaDir
                                   ]
 
-withMarkdownsAll :: Config -> ((Text, Meta) -> M.Map FilePath Int -> Html) -> IO [Meta]
+withMarkdownsAll :: Config -> ((Text, Meta) -> Synopsis -> M.Map FilePath Int -> Html) -> IO [Meta]
 withMarkdownsAll config processor = do
     print "Generating posts..."
 
@@ -57,9 +58,10 @@ withMarkdownsAll config processor = do
         content      <- maybeContent
         (Meta_ t d a tg _, str') <- parseMeta content
         let meta = Meta_ t d a tg $ "posts" </> path ++ ".html"
+        let synopsis = extract str'
         let mdpath = markdownDir </> path ++ ".md"
         let Just keywords = M.lookup mdpath keywordsGroup
-        return $ (meta, processor (pack str', meta) keywords) : pairs
+        return $ (meta, processor (pack str', meta) synopsis keywords) : pairs
 
 withPage name config f = do
     print $ "Generating page " ++ name ++ " ..."

@@ -49,17 +49,14 @@ index posts = do
 But you can use the API in other way as well, enjoy blogging :)
 
 ## Tickets
-* Maybe except for templates, all `H.XXX` should be provided by user?
 * How to Extract a synopsis out of markdown text?
 * URLibrary
-
 
 ## Features in planning
 * Content analyzing -- To generate tags, synopsis automatically
 * Collect all URL appeared in the posts
 * Revision history by analyzing git commits
 * Theme system
-
 
 ## Structure
 You can think there are five abstract layers:

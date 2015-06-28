@@ -17,7 +17,7 @@ import BBQ.SG.Components.HomePage
 import BBQ.SG.Components.Tags
 import BBQ.SG.Tools.IO
 
-runSG config index = do
+runSG config indexLayout postsLayout tagsLayout = do
     (js, css) <- getJsCSS config
     let indexJsRoutes  = map (_jsSrcDir config </>) js
     let indexCssRoutes = map (_cssSrcDir config </>) css
@@ -31,13 +31,13 @@ runSG config index = do
     prepareFolders config
 
     -- Generate posts and collect meta info
-    metas <- postGen [ ana, scriptList postJsRoutes, cssList postCssRoutes ] config
+    metas <- postGen [ ana, scriptList postJsRoutes, cssList postCssRoutes ] config postsLayout
 
     -- Generate Homepage
-    homePageGen indexHeaders index config metas
+    homePageGen indexHeaders indexLayout config metas
 
     -- Generate Tags page
-    tagsGen indexHeaders config metas
+    tagsGen indexHeaders config metas tagsLayout
 
     -- Sync Images
     syncImages config

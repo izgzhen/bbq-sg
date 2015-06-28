@@ -2,30 +2,33 @@
 
 module BBQ.SG.Components.Posts (postGen) where
 import BBQ.SG.Tools.IO
+import BBQ.SG.Tools.Synopsis
 import BBQ.SG.Template
 import BBQ.SG.Plugin
-import Text.Blaze.Html5 as H
-import Text.Blaze.Html5.Attributes as A
 import Text.Markdown
+import Data.Text.Lazy (pack)
 
-postGen headers config = withMarkdownsAll config (f headers)
+postGen headers config layout = withMarkdownsAll config (f headers layout)
 
-f headers (text, meta) keywords = htmlTemplate title headers html
+mergeSynopsis (Synopsis_ prelude menu) = unlines $ prelude' ++ menu
     where
+        prelude' = case prelude of
+            Nothing -> []
+            Just p  -> [p]
+
+f headers layout (text, meta) synopsis keywords = htmlTemplate title headers html
+    where
+        synopsisHtml = markdown def (pack $ mergeSynopsis synopsis)
         mainHtml = markdown def text
         title    = showMaybeStr $ _title meta
-        html     = do
-                H.h1 $ toHtml title
-                H.h5 $ toHtml ((showMaybe $ _author meta) ++ (showMaybe $ _date meta))
-                H.hr
-                H.section
-                    mainHtml
-                H.p $ do
-                    toHtml $ "Tags: " ++ (show $ _tags meta)
-                    H.br
-                    H.a ! A.href "../index.html"
-                        $ "Back to index page"
-                copyRight
-                mathjax
-                showKeyWords keywords
+        html     = pageTemplate title $ do
+            layout
+                synopsisHtml
+                mainHtml
+                (showMaybe $ _author meta)
+                (showMaybe $ _date meta)
+                (_tags meta)
+            copyRight
+            mathjax
+            showKeyWords keywords
 
