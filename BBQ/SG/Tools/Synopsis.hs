@@ -9,21 +9,33 @@ headerToList = M.fromList [
     , ("####", "\t\t\t-")
       ]
 
+isCodePrefix s = length s >= 3 && take 3 s == "```"
 
-process []       = []
-process (ln:lns) = entry ++ process lns
+xor True True   = False
+xor False False = False
+xor True False  = True
+xor False True  = True
+
+process []       inCode = []
+process (ln:lns) inCode = case eEntry of
+    Left iC'       -> process lns iC'
+    Right (iC', e) -> e : process lns iC'
     where
         wds = words ln
-        m   = if length wds > 1 then Just (head wds, unwords $ tail wds)
-                                else Nothing
-        mEntry = do
-            (prefix, header) <- m
-            translated <- M.lookup prefix headerToList
-            return $ translated ++ " " ++ header
+        e   = case wds of
+            []   -> Left inCode
+            w:[] -> Left $ inCode `xor` isCodePrefix w
+            w:ws -> Right (w, unwords ws)
 
-        entry = case mEntry of
-            Nothing -> []
-            Just ln -> [ln]
+        eEntry = do
+            (prefix, header) <- e
+            let inCode' = inCode `xor` isCodePrefix prefix
+
+            if not inCode' then case M.lookup prefix headerToList of
+                Nothing         -> Left inCode'
+                Just translated -> Right (inCode', translated ++ " " ++ header)
+            else Left inCode'
+
 
 data Synopsis = Synopsis_ {
     _prelude :: Maybe String,
@@ -37,7 +49,7 @@ extract text = Synopsis_ prelude' menu'
         prelude' = case prelude of
             []  -> Nothing
             lns -> Just $ unlines lns
-        menu  = process rest
+        menu  = process rest False -- Not in code block initially
         menu' = deleteGarbageIndent menu
 
 deleteGarbageIndent :: [String] -> [String]
@@ -55,6 +67,4 @@ deleteGarbageIndent lns = let minIndent = getMinIndent lns
         deleteIndent indent line = let (i, rest) = getIndent line
                                        i' = take (length i - indent) $ repeat '\t'
                                    in  i' ++ rest
-
-
 

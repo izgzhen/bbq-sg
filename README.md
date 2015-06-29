@@ -49,8 +49,8 @@ index posts = do
 But you can use the API in other way as well, enjoy blogging :)
 
 ## Tickets
-* How to Extract a synopsis out of markdown text?
-* URLibrary
+* Synopsis will break in some conditions
+* Before Release v0.3.0.0 -- Fix all problems, improve the compatibility, stablity and code quality.
 
 ## Features in planning
 * Content analyzing -- To generate tags, synopsis automatically
@@ -68,8 +68,4 @@ You can think there are five abstract layers:
 5. Definitions
 
 The users write `driver` code, and call the `interface`, which is composed of `components`, like `posts`, `tags`, `homepage` etc. But the realization of components needs a lot of tools, like `syncResource`, `parseMeta`, `getFileList` and `getMarkdowns`, which interacts with file system and processing texts, all nitty-gritty tools. The `Definitions` defines the configuration items and meta info of a post. Mostly declarations.
-
-
-
-
 
