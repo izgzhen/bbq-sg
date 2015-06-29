@@ -9,14 +9,16 @@
 
 module BBQ.SG.Tools.AutoKeywords where
 import Control.Applicative
+import BBQ.SG.Config
 import BBQ.SG.Tools.WordCount
 import System.FilePath((</>))
 import BBQ.SG.Misc (getFilesEndWith)
 import qualified Data.Map as M
 import qualified Data.List as D
 
-generateKeyWords markdownPath = do
-    blacklist <- lines <$> readFile "blacklist.txt"
+generateKeyWords config = do
+    let markdownPath = _markdownDir config
+    blacklist <- lines <$> readFile (_blacklist config)
     files <- map (markdownPath </>) <$> getFilesEndWith markdownPath ".md"
     contents <- mapM readFile files
     let commonWords = foldr (M.unionWith (+)) M.empty $ map (reverseMap . selectHighest 30 blacklist) contents

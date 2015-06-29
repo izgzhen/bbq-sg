@@ -16,11 +16,14 @@ import BBQ.SG.Components.Posts
 import BBQ.SG.Components.HomePage
 import BBQ.SG.Components.Tags
 import BBQ.SG.Tools.IO
+import BBQ.SG.Misc
 
 runSG config indexLayout postsLayout tagsLayout = do
     (js, css) <- getJsCSS config
-    let indexJsRoutes  = map (_jsSrcDir config </>) js
-    let indexCssRoutes = map (_cssSrcDir config </>) css
+    let jsPath  = dropFirstDir (_srcDir config) (_jsSrcDir config)
+    let cssPath = dropFirstDir (_srcDir config) (_cssSrcDir config)
+    let indexJsRoutes  = map (jsPath  </>) js
+    let indexCssRoutes = map (cssPath </>) css
     let postJsRoutes   = map (".." </>) indexJsRoutes
     let postCssRoutes  = map (".." </>) indexCssRoutes
 

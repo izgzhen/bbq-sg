@@ -40,7 +40,7 @@ withMarkdownsAll config processor = do
 
     contents  <- mapM (\filename -> readFileMaybe $ markdownDir </> filename ++ ".md") filenames
 
-    keywordsGroup <- generateKeyWords $ _markdownDir config
+    keywordsGroup <- generateKeyWords config
 
     case foldr (withFile $ M.fromList keywordsGroup) (Right []) (zip contents filenames) of
         Left errMsg      -> do print $ "Error: " ++ errMsg
@@ -70,15 +70,15 @@ withPage name config f = do
 
 syncImages config = do
     print "Sync images ..."
-    syncResource (_imgSrcDir config) (_imgStaDir config) (_staticDir config)
+    syncResource (_imgSrcDir config) (_imgStaDir config) (_staticDir config) (_srcDir config)
 
 syncJs config = do
     print "Sync JavaScripts ..."
-    syncResource (_jsSrcDir config) (_jsStaDir config) (_staticDir config)
+    syncResource (_jsSrcDir config) (_jsStaDir config) (_staticDir config)  (_srcDir config)
 
 syncCss config = do
     print "Sync CSS ..."
-    syncResource (_cssSrcDir config) (_cssStaDir config) (_staticDir config)
+    syncResource (_cssSrcDir config) (_cssStaDir config) (_staticDir config)  (_srcDir config)
 
 
 getJsCSS config = do
@@ -88,34 +88,34 @@ getJsCSS config = do
     css <- getFilesEndWith (_cssSrcDir config) ".css"
     return (js, css)
 
-syncResource srcDir staDir prefix = do
+syncResource srcDir staDir prefixSta prefixSrc = do
 
-    src    <- fromList . map fst <$> getFileDict srcDir
-    static <- fromList . map (dropFirstDir prefix) . map fst <$> getFileDict staDir
+    src    <- fromList . map (dropFirstDir prefixSrc . fst) <$> getFileDict srcDir
+    static <- fromList . map (dropFirstDir prefixSta) . map fst <$> getFileDict staDir
 
     let notInSrc = toList $ difference static src
     let notInSta = toList $ difference src static
     mapM_ (\invalid -> do
-                print $ "remove invalid " ++ show invalid
-                removeFile $ invalid
+                print $ "remove invalid " ++ show (prefixSta </> invalid)
+                removeFile (prefixSta </> invalid)
           ) notInSrc
     mapM_ (\new     -> do
-                print $ "add new " ++ show new
-                copyFile new (prefix </> new)
+                print $ "add new " ++ show (prefixSta </> new)
+                copyFile new (prefixSta </> dropFirstDir prefixSrc new)
           ) notInSta
 
     let common = toList $ intersection src static
 
     mapM_ (\commonPath -> do
-                srcSize <- getFileSize commonPath
-                staSize <- getFileSize (prefix </> commonPath)
-                -- srcMod  <- getModificationTime commonPath
-                -- staMod  <- getModificationTime (_staticDir config </> commonPath)
+            srcSize <- getFileSize (prefixSrc </> commonPath)
+            staSize <- getFileSize (prefixSta </> commonPath)
+            -- srcMod  <- getModificationTime commonPath
+            -- staMod  <- getModificationTime (_staticDir config </> commonPath)
 
-                if srcSize /= staSize then do
-                        print $ "updating " ++ show (prefix </> commonPath) ++ " with " ++ show commonPath
-                        copyFile commonPath (prefix </> commonPath)
-                    else return ()
+            if srcSize /= staSize then do
+                    print $ "updating " ++ show (prefixSta </> commonPath) ++ " with " ++ show (prefixSrc </> commonPath)
+                    copyFile (prefixSrc </> commonPath) (prefixSta </> commonPath)
+                else return ()
           ) common
 
 

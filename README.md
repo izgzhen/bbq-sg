@@ -52,7 +52,7 @@ The `Posts.hs`, `Index.hs` and `Tags.hs` are all layout scripts. For examples yo
 Although this is the workflow I designed the `BBQ-SG` with in mind, but you are free to choose another style. Happy blogging :)
 
 ## Tickets
-* Before Release v0.3.0.0 -- Fix all problems, improve the compatibility, stablity and code quality.
+* The final BIG BUG: How to organize the `src` dir, `sta` dir as well as the path in HTML? They have some relationships, but a little difficult to get cleaner while don't cause too much trouble to user.
 
 ## Features in planning
 * Content analyzing -- To generate tags, synopsis automatically

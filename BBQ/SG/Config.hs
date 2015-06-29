@@ -2,6 +2,7 @@ module BBQ.SG.Config where
 
 -- The configuration which needs to be provided by user
 data Config = Config_ {
+    _srcDir      :: FilePath,
     _staticDir   :: FilePath,
     _markdownDir :: FilePath,
     _imgSrcDir   :: FilePath,
@@ -11,6 +12,7 @@ data Config = Config_ {
     _jsStaDir    :: FilePath,
     _cssSrcDir   :: FilePath,
     _cssStaDir   :: FilePath,
+    _blacklist   :: FilePath,
     _analyticsId :: String
 }
 
