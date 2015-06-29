@@ -5,51 +5,53 @@ BBQ-SG is defined as a static generator of blog posts (not barbecue), like [mine
 
 The key idea behind this tool is that, the whole site can be rebuild from a single folder containing all markdown raw text and its related image. Information should be self-contained and always readable rather than hashed into some other place like a DB.
 
-## Get started
+## Getting started
 I organized my own workflow like this:
 
-Prepare two repos, `static` and `src`, though they might not be called like that, but you can `ln -s`.
+I used GitHub Pages service so I have a repo for all static stuff, like this for example:
 
-In `src`, which has `markdowns` and `images` and some scripting `.hs` files which will call the library's interface with `config` attached. For example:
+    .
+    ├── CNAME
+    ├── css
+    │   └── ...
+    ├── images
+    │   ├── ...
+    ├── index.html
+    ├── js
+    │   └── ...
+    ├── posts
+    │   ├── ...
+    └── tags.html
 
-```haskell
-import BBQ.SG
-import Index (index)
-import System.FilePath ((</>))
+And I have a source folder including all launching scripts, layout script, markdowns, js, css and images:
 
-srcDir      = "."
-staticDir   = "./static"
-markdownDir = srcDir    </> "markdowns"
-imgSrcDir   = srcDir    </> "images"
-postsDir    = staticDir </> "posts"
-imgStaDir   = staticDir </> "images"
-analyticsId = "UA-64349949-1"
+    .
+    ├── Boot.hs
+    ├── Config.hs
+    ├── Index.hs
+    ├── Main.hs
+    ├── Posts.hs
+    ├── Tags.hs
+    ├── blacklist.txt
+    ├── css
+    │   └── ...
+    ├── images
+    │   ├── ...
+    ├── js
+    │   └── ...
+    ├── markdowns
+    │   ├── ...
+    └── static -> /path/to/my/static/repo
 
-config = Config_ staticDir
-                 markdownDir
-                 imgSrcDir
-                 postsDir
-                 imgStaDir
-                 analyticsId
+The `blacklist.txt` can contain the common words you might want to pre-filter out when using the keyword-auto-generator, although the generator will do some filtering itself as well.
 
-main = runSG config index
-```
+The `Boot.hs` is a seperated written script to pre-generate a markdown file containing the required format for meta-info to be parsed. It is pretty useful since you don't have to fill in the date etc. by yourself.
 
-The `Index.hs` is used to generate `index.html`, an example:
+The `Posts.hs`, `Index.hs` and `Tags.hs` are all layout scripts. For examples you can refer to the `examples` in this repo. And `Main.hs` drive the generation of static blog, with `Config.hs` in which the paths, google analytics id etc. filled in.
 
-```haskell
-module Index where
-import BBQ.SG.Plugin as P
-
-index posts = do
-    P.p "Hello, welcome to my blog"
-    P.urlList posts
-```
-
-But you can use the API in other way as well, enjoy blogging :)
+Although this is the workflow I designed the `BBQ-SG` with in mind, but you are free to choose another style. Happy blogging :)
 
 ## Tickets
-* Synopsis will break in some conditions
 * Before Release v0.3.0.0 -- Fix all problems, improve the compatibility, stablity and code quality.
 
 ## Features in planning

@@ -1,9 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module BBQ.SG.Plugin (
-  Plugin
-, Snippet
-, analytics
+  analytics
 , mathjax
 , urlList
 , BBQ.SG.Plugin.p
@@ -18,20 +16,18 @@ module BBQ.SG.Plugin (
 , showKeyWords
 ) where
 
-import Text.Blaze.Html5 as H
-import Text.Blaze.Html5.Attributes as A
+import qualified Text.Blaze.Html5 as H
+import Text.Blaze.Html5((!))
+import qualified Text.Blaze.Html5.Attributes as A
 import BBQ.SG.Meta
 import Data.Time.Clock
 import Data.Time.Calendar
 import BBQ.SG.Misc
 import qualified Data.Map as M
 
-type Plugin  a = a -> Html
-type Snippet   = Html
 
-
-analytics :: Plugin String
-analytics analyticsId = H.script $ toMarkup string
+analytics :: String -> H.Html
+analytics analyticsId = H.script $ H.toMarkup string
   where
     string :: String
     string = 
@@ -41,29 +37,31 @@ analytics analyticsId = H.script $ toMarkup string
             "})(window,document,'script','//www.google-analytics.com/analytics.js','ga');" ++
             "ga('create', '" ++ analyticsId ++ "', 'auto'); ga('send', 'pageview');"
 
-mathjax :: Snippet
+mathjax :: H.Html
 mathjax = do
             H.script ! A.type_ "text/javascript"
                      ! A.src   "http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" $ ""
             H.script ! A.type_ "text/x-mathjax-config" $ "MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\\\(','\\\\)']]} });"
 
 
-urlList :: Plugin [(String, FilePath)]
+urlList :: [(String, FilePath)] -> H.Html
 urlList list = H.ul $ do
                 let itemize (name, url) = H.li $ H.a ! A.href (H.toValue url) $ H.toHtml name
                 mapM_ itemize list
 
 -- Re-export part of HTML tags
-p :: ToMarkup a => a -> Html
-p = H.p . toHtml
+p :: H.ToMarkup a => a -> H.Html
+p = H.p . H.toHtml
 
-a :: (ToMarkup a, ToValue b) => a -> b -> Html
-a text addr = H.a ! A.href (toValue addr)
-                  $ toHtml text
+a :: (H.ToMarkup a, H.ToValue b) => a -> b -> H.Html
+a text addr = H.a ! A.href (H.toValue addr)
+                  $ H.toHtml text
 
 
-copyRight :: Snippet
-copyRight = H.div $ H.p "Copyright Reserved, Zhen Zhang, 2015"
+copyRight :: String -> String -> H.Html
+copyRight author year = H.div $ do
+                  H.p $ H.toHtml $ "Copyright Reserved, " ++ author ++ ", " ++ year
+                  H.p $ "Generated with BBQ Static Generator"
 
 getToday = do
   (y, m, d) <- getCurrentTime >>= return . toGregorian . utctDay
@@ -71,18 +69,18 @@ getToday = do
 
 
 
-scriptList :: Plugin [FilePath]
+scriptList :: [FilePath] -> H.Html
 scriptList scripts = mapM_ (\s -> H.script ! A.type_ "text/javascript"
-                                           ! A.src   (toValue s)
+                                           ! A.src   (H.toValue s)
                                            $ ""
                            ) scripts
 
-cssList :: Plugin [FilePath]
-cssList csses = mapM_ (\c -> H.link ! A.href  (toValue c)
+cssList :: [FilePath] -> H.Html
+cssList csses = mapM_ (\c -> H.link ! A.href  (H.toValue c)
                                     ! A.rel   "stylesheet"
                                     ! A.type_ "text/css"
                       ) csses
 
 
-showKeyWords :: Plugin (M.Map String Int)
-showKeyWords keywords = H.p $ toHtml $ show keywords
+showKeyWords :: M.Map String Int -> H.Html
+showKeyWords keywords = H.p $ H.toHtml $ show keywords

@@ -28,7 +28,6 @@ f headers layout (text, meta) synopsis keywords = htmlTemplate title headers htm
                 (showMaybe $ _author meta)
                 (showMaybe $ _date meta)
                 (_tags meta)
-            copyRight
             mathjax
             showKeyWords keywords
 

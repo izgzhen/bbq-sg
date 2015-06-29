@@ -26,5 +26,6 @@ tagsGen headers config metas layout = withPage "tags" config $ do
 
     let mainHtml = pageTemplate "tags" $ layout infoDict
 
-    return mainHtml
+    let html = htmlTemplate "Index" headers mainHtml
 
+    return html
