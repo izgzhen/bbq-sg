@@ -58,10 +58,10 @@ withMarkdownsAll config processor = do
         content      <- maybeContent
         (Meta_ t d a tg _, str') <- parseMeta content
         let meta = Meta_ t d a tg $ "posts" </> path ++ ".html"
-        let synopsis = extract str'
+        let (synopsis, body') = extract str'
         let mdpath = markdownDir </> path ++ ".md"
         let Just keywords = M.lookup mdpath keywordsGroup
-        return $ (meta, processor (pack str', meta) synopsis keywords) : pairs
+        return $ (meta, processor (pack body', meta) synopsis keywords) : pairs
 
 withPage name config f = do
     print $ "Generating page " ++ name ++ " ..."

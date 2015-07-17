@@ -52,10 +52,13 @@ The `Posts.hs`, `Index.hs` and `Tags.hs` are all layout scripts. For examples yo
 Although this is the workflow I designed the `BBQ-SG` with in mind, but you are free to choose another style. Happy blogging :)
 
 ## Tickets
-* The final BIG BUG: How to organize the `src` dir, `sta` dir as well as the path in HTML? They have some relationships, but a little difficult to get cleaner while don't cause too much trouble to user.
+
+* Auto Hash-tagging
+* Generate split tag pages and do reverse linking (Need to change the single phase to multi-phase design, more flexible coding style)
+* How to organize the `src` dir, `sta` dir as well as the path in HTML? They have some relationships, but a little difficult to get cleaner while don't cause too much trouble to user.
+* Better layout framework: Give user enough choices while not complicating the APIs (Should be intuitive)
 
 ## Features in planning
-* Content analyzing -- To generate tags, synopsis automatically
 * Collect all URL appeared in the posts
 * Revision history by analyzing git commits
 * Theme system

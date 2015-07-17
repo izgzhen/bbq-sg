@@ -1,6 +1,27 @@
-module BBQ.SG.Tools.Synopsis where
+module BBQ.SG.Tools.Synopsis (
+    extract,
+    Synopsis(..)
+) where
 
 import qualified Data.Map as M
+import Network.URL
+import Data.List.Extra
+
+toURL :: String -> String
+toURL filename = let Just url = importURL filename in exportURL url
+
+fromURL :: String -> String
+fromURL url = let Just (URL _ str _) = importURL url in str
+
+joinWords :: String -> [String] -> String
+joinWords _       []     = ""
+joinWords spliter (w:[]) = w
+joinWords spliter (w:ws) = w ++ spliter ++ joinWords spliter ws
+
+toHeader :: String -> String
+toHeader str = let url = toURL str
+                   noWhiteSpace = splitOn "%20" url
+               in  joinWords "-" noWhiteSpace
 
 headerToList = M.fromList [
       ("#", "1.")
@@ -16,25 +37,45 @@ xor False False = False
 xor True False  = True
 xor False True  = True
 
-process []       inCode = []
-process (ln:lns) inCode = case eEntry of
-    Left iC'       -> process lns iC'
-    Right (iC', e) -> e : process lns iC'
+process lns inCode = foldr reducer (inCode, [], []) lns
+
+reducer :: String -> (Bool, [String], [String]) -> (Bool, [String], [String])
+reducer line (inCode, entries, lines) = 
+    let (inCode', maybeEntry', newLine) = mapper inCode line
+    in  (inCode', ifAppend maybeEntry' entries, newLine : lines)
     where
-        wds = words ln
-        e   = case wds of
-            []   -> Left inCode
-            w:[] -> Left $ inCode `xor` isCodePrefix w
-            w:ws -> Right (w, unwords ws)
+        ifAppend maybeX xs = case maybeX of
+            Just x  -> [x] ++ xs
+            Nothing -> xs
 
-        eEntry = do
-            (prefix, header) <- e
-            let inCode' = inCode `xor` isCodePrefix prefix
+mapper :: Bool -> String -> (Bool, Maybe String, String)
+mapper inCode ln =
+    let getNextInCode x = inCode `xor` (isCodePrefix x)
+        notHeaderLine ic' = (ic', Nothing, ln)
+    in case destruct ln of
+        Empty                   -> notHeaderLine inCode
+        Single w                -> notHeaderLine (getNextInCode w)
+        Multiple w trailings    -> let inCode' = getNextInCode w
+            in if not inCode' then
+                case M.lookup w headerToList of
+                    Nothing         -> notHeaderLine inCode'
+                    Just translated -> 
+                        let header' = toHeader trailings
+                            tag     = "<a name=\"" ++ header' ++ "\"></a>"
+                            link    = "[" ++ trailings ++ "](#" ++ header' ++ ")"
+                        in (inCode', Just (translated ++ " " ++ link), "\n" ++ w ++ tag ++ header')
+                else (inCode', Nothing, ln)
 
-            if not inCode' then case M.lookup prefix headerToList of
-                Nothing         -> Left inCode'
-                Just translated -> Right (inCode', translated ++ " " ++ header)
-            else Left inCode'
+
+data LineStatus = Empty
+                | Single String
+                | Multiple String String
+
+destruct ln = case (words ln) of
+    []   -> Empty
+    w:[] -> Single w
+    w:ws -> Multiple w (unwords ws)
+
 
 
 data Synopsis = Synopsis_ {
@@ -42,14 +83,14 @@ data Synopsis = Synopsis_ {
     _menu    :: [String]
 } deriving (Show)
 
-extract text = Synopsis_ prelude' menu'
+extract text = (Synopsis_ prelude' menu', unlines rest')
     where
         lns = lines text
         (prelude, rest) = span (\ln -> length (words ln) < 2 || M.lookup (head $ words ln) headerToList == Nothing) lns
         prelude' = case prelude of
             []  -> Nothing
             lns -> Just $ unlines lns
-        menu  = process rest False -- Not in code block initially
+        (_, menu, rest') = process rest False -- Not in code block initially
         menu' = deleteGarbageIndent menu
 
 deleteGarbageIndent :: [String] -> [String]
