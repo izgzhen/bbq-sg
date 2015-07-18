@@ -20,10 +20,12 @@ import BBQ.SG.Misc
 
 runSG config indexLayout postsLayout tagsLayout = do
     (js, css) <- getJsCSS config
-    let jsPath  = dropFirstDir (_srcDir config) (_jsSrcDir config)
-    let cssPath = dropFirstDir (_srcDir config) (_cssSrcDir config)
-    let indexJsRoutes  = map (jsPath  </>) js
-    let indexCssRoutes = map (cssPath </>) css
+    let indexJsRoutes  = map (_jsURL config  </>) js
+    let indexCssRoutes = map (_cssURL config </>) css
+
+    -- Currently, this level of problem can't be solved neatly
+    -- Unless we can create a function *knowing what does root URL means*
+    -- But it could be the next ticket
     let postJsRoutes   = map (".." </>) indexJsRoutes
     let postCssRoutes  = map (".." </>) indexCssRoutes
 

@@ -24,21 +24,22 @@ import Prelude hiding (writeFile)
 import qualified Data.Map as M
 import Data.Text.Lazy.IO (writeFile)
 
-prepareFolders config = mapM_ (createDirectoryIfMissing True)
+prepareFolders config = do mapM_ (createDirectoryIfMissing True)
                             $ map (\f -> f config)
-                                  [ _postsDir
-                                  , _imgStaDir
-                                  , _jsStaDir
-                                  , _cssStaDir
+                                  [ _postsSta
+                                  , _imgSta
+                                  , _jsSta
+                                  , _cssSta
+                                  , _tagsSta
                                   ]
 
 withMarkdownsAll :: Config -> ((Text, Meta) -> Synopsis -> M.Map FilePath Int -> Html) -> IO [Meta]
 withMarkdownsAll config processor = do
     print "Generating posts..."
 
-    filenames <- map dropExtensions <$> getFilesEndWith markdownDir ".md"
+    filenames <- map dropExtensions <$> getFilesEndWith (_postsSrc config) ".md"
 
-    contents  <- mapM (\filename -> readFileMaybe $ markdownDir </> filename ++ ".md") filenames
+    contents  <- mapM (\filename -> readFileMaybe $ (_postsSrc config) </> filename ++ ".md") filenames
 
     keywordsGroup <- generateKeyWords config
 
@@ -46,12 +47,10 @@ withMarkdownsAll config processor = do
         Left errMsg      -> do print $ "Error: " ++ errMsg
                                return []
         Right collection -> do
-            mapM_ (\(html, filename) -> writeFile (postsDir </> filename ++ ".html") (renderHtml html))
+            mapM_ (\(html, filename) -> writeFile (_postsSta config </> filename ++ ".html") (renderHtml html))
                  $ zip (map snd collection) filenames
             return $ map fst collection
   where
-    markdownDir = _markdownDir config
-    postsDir    = _postsDir    config
     withFile :: M.Map FilePath (M.Map String Int) -> (EitherS String, FilePath) -> EitherS [(Meta, Html)] -> EitherS [(Meta, Html)]
     withFile keywordsGroup (maybeContent, path) mPairs = do
         pairs        <- mPairs
@@ -59,62 +58,62 @@ withMarkdownsAll config processor = do
         (Meta_ t d a tg _, str') <- parseMeta content
         let meta = Meta_ t d a tg $ "posts" </> path ++ ".html"
         let (synopsis, body') = extract str'
-        let mdpath = markdownDir </> path ++ ".md"
+        let mdpath = (_postsSrc config) </> path ++ ".md"
         let Just keywords = M.lookup mdpath keywordsGroup
         return $ (meta, processor (pack body', meta) synopsis keywords) : pairs
 
-withPage name config f = do
-    print $ "Generating page " ++ name ++ " ..."
-    html <- f
-    writeFile (_staticDir config </> name ++ ".html") (renderHtml html)
+-- Generate by URL
+withPage url config html = do
+    print $ "Generating page " ++ url ++ " ..."
+    writeFile (_staticDir config </> url ++ ".html") (renderHtml html)
 
 syncImages config = do
     print "Sync images ..."
-    syncResource (_imgSrcDir config) (_imgStaDir config) (_staticDir config) (_srcDir config)
+    syncResource (_imgSrc config) (_imgSta config) (_srcDir config) (_staticDir config)
 
 syncJs config = do
     print "Sync JavaScripts ..."
-    syncResource (_jsSrcDir config) (_jsStaDir config) (_staticDir config)  (_srcDir config)
+    syncResource (_jsSrc config) (_jsSta config)  (_srcDir config) (_staticDir config)
 
 syncCss config = do
     print "Sync CSS ..."
-    syncResource (_cssSrcDir config) (_cssStaDir config) (_staticDir config)  (_srcDir config)
+    syncResource (_cssSrc config) (_cssSta config)  (_srcDir config) (_staticDir config)
 
 
 getJsCSS config = do
     syncJs config
     syncCss config
-    js  <- getFilesEndWith (_jsSrcDir config) ".js"
-    css <- getFilesEndWith (_cssSrcDir config) ".css"
+    js  <- getFilesEndWith (_jsSrc config) ".js"
+    css <- getFilesEndWith (_cssSrc config) ".css"
     return (js, css)
 
-syncResource srcDir staDir prefixSta prefixSrc = do
+syncResource srcDir staDir srcRoot staRoot = do
 
-    src    <- fromList . map (dropFirstDir prefixSrc . fst) <$> getFileDict srcDir
-    static <- fromList . map (dropFirstDir prefixSta) . map fst <$> getFileDict staDir
+    src    <- fromList . filterJust . map (dropPrefix srcRoot . fst) <$> getFileDict srcDir
+    static <- fromList . filterJust . map (dropPrefix staRoot . fst) <$> getFileDict staDir
 
     let notInSrc = toList $ difference static src
     let notInSta = toList $ difference src static
     mapM_ (\invalid -> do
-                print $ "remove invalid " ++ show (prefixSta </> invalid)
-                removeFile (prefixSta </> invalid)
+                print $ "remove invalid " ++ show (staRoot </> invalid)
+                removeFile (staRoot </> invalid)
           ) notInSrc
     mapM_ (\new     -> do
-                print $ "add new " ++ show (prefixSta </> new)
-                copyFile new (prefixSta </> dropFirstDir prefixSrc new)
+                print $ "add new " ++ show (staRoot </> new)
+                copyFile (srcRoot </> new) (staRoot </> new)
           ) notInSta
 
     let common = toList $ intersection src static
 
     mapM_ (\commonPath -> do
-            srcSize <- getFileSize (prefixSrc </> commonPath)
-            staSize <- getFileSize (prefixSta </> commonPath)
+            srcSize <- getFileSize (srcRoot </> commonPath)
+            staSize <- getFileSize (staRoot </> commonPath)
             -- srcMod  <- getModificationTime commonPath
             -- staMod  <- getModificationTime (_staticDir config </> commonPath)
 
             if srcSize /= staSize then do
-                    print $ "updating " ++ show (prefixSta </> commonPath) ++ " with " ++ show (prefixSrc </> commonPath)
-                    copyFile (prefixSrc </> commonPath) (prefixSta </> commonPath)
+                    print $ "updating " ++ show (staRoot </> commonPath) ++ " with " ++ show (srcRoot </> commonPath)
+                    copyFile (srcRoot </> commonPath) (staRoot </> commonPath)
                 else return ()
           ) common
 

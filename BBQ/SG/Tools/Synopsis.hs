@@ -4,24 +4,7 @@ module BBQ.SG.Tools.Synopsis (
 ) where
 
 import qualified Data.Map as M
-import Network.URL
-import Data.List.Extra
-
-toURL :: String -> String
-toURL filename = let Just url = importURL filename in exportURL url
-
-fromURL :: String -> String
-fromURL url = let Just (URL _ str _) = importURL url in str
-
-joinWords :: String -> [String] -> String
-joinWords _       []     = ""
-joinWords spliter (w:[]) = w
-joinWords spliter (w:ws) = w ++ spliter ++ joinWords spliter ws
-
-toHeader :: String -> String
-toHeader str = let url = toURL str
-                   noWhiteSpace = splitOn "%20" url
-               in  joinWords "-" noWhiteSpace
+import BBQ.SG.Misc
 
 headerToList = M.fromList [
       ("#", "1.")

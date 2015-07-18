@@ -59,9 +59,10 @@ a text addr = H.a ! A.href (H.toValue addr)
 
 
 copyRight :: String -> String -> H.Html
-copyRight author year = H.div $ do
-                  H.p $ H.toHtml $ "Copyright Reserved, " ++ author ++ ", " ++ year
-                  H.p $ "Generated with BBQ Static Generator"
+copyRight author year =
+  H.div $ do
+    H.p $ H.toHtml $ "Copyright Reserved, " ++ author ++ ", " ++ year
+    H.p $ "Generated with BBQ Static Generator"
 
 getToday = do
   (y, m, d) <- getCurrentTime >>= return . toGregorian . utctDay
