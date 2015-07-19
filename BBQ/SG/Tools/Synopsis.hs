@@ -46,7 +46,7 @@ mapper inCode ln =
                         let header' = toHeader trailings
                             tag     = "<a name=\"" ++ header' ++ "\"></a>"
                             link    = "[" ++ trailings ++ "](#" ++ header' ++ ")"
-                        in (inCode', Just (translated ++ " " ++ link), "\n" ++ w ++ tag ++ header')
+                        in (inCode', Just (translated ++ " " ++ link), "\n" ++ w ++ tag ++ trailings)
                 else (inCode', Nothing, ln)
 
 
