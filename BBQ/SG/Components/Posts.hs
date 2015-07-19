@@ -34,4 +34,4 @@ f config headers layout (text, meta) synopsis keywords = htmlTemplate title head
             mathjax
             showKeyWords keywords
 
-addTagLink config tags = map (\tag -> (tag, _tagsSta config </> toURL tag ++ ".html")) tags
+addTagLink config tags = map (\tag -> (tag, ".." </> _tagsURL config </> toURL tag ++ ".html")) tags
