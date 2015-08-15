@@ -21,6 +21,7 @@ library
                        BBQ.SG.Meta,
                        BBQ.SG.Config,
                        BBQ.SG.Components.HomePage,
+                       BBQ.SG.Components.Page,
                        BBQ.SG.Components.Posts,
                        BBQ.SG.Components.Tags,
                        BBQ.SG.Tools.AutoKeywords,

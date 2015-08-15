@@ -11,7 +11,7 @@ import BBQ.SG.Config
 import Text.Markdown
 import Data.Text.Lazy (pack)
 
-postGen headers config layout = withMarkdownsAll config (f config headers layout)
+postGen headers config layout = withPostMarkdowns config (f config headers layout)
 
 mergeSynopsis (Synopsis_ prelude menu) = unlines $ prelude' ++ menu
     where

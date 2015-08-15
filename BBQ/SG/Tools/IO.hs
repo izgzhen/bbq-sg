@@ -1,6 +1,6 @@
 module BBQ.SG.Tools.IO (
   prepareFolders   
-, withMarkdownsAll
+, withPostMarkdowns
 , withPage
 , syncImages
 , getJsCSS
@@ -14,7 +14,7 @@ import BBQ.SG.Tools.Parser
 import BBQ.SG.Tools.AutoKeywords
 import BBQ.SG.Tools.Synopsis
 import Text.Blaze.Html.Renderer.Text
-import Data.Text.Lazy (Text, pack)
+import Data.Text.Lazy (Text, pack, unpack)
 import System.Directory
 import System.FilePath
 import Control.Applicative((<$>))
@@ -27,14 +27,17 @@ import Data.Text.Lazy.IO (writeFile)
 prepareFolders config = do mapM_ (createDirectoryIfMissing True)
                             $ map (\f -> f config)
                                   [ _postsSta
+                                  , _pageSta
                                   , _imgSta
                                   , _jsSta
                                   , _cssSta
                                   , _tagsSta
                                   ]
 
-withMarkdownsAll :: Config -> ((Text, Meta) -> Synopsis -> M.Map FilePath Int -> Html) -> IO [Meta]
-withMarkdownsAll config processor = do
+
+
+withPostMarkdowns :: Config -> ((Text, Meta) -> Synopsis -> M.Map FilePath Int -> Html) -> IO [Meta]
+withPostMarkdowns config processor = do
     print "Generating posts..."
 
     filenames <- map dropExtensions <$> getFilesEndWith (_postsSrc config) ".md"
@@ -65,7 +68,7 @@ withMarkdownsAll config processor = do
 -- Generate by URL
 withPage url config html = do
     print $ "Generating page " ++ url ++ " ..."
-    writeFile (_staticDir config </> url ++ ".html") (renderHtml html)
+    writeFileRobust (_staticDir config </> url ++ ".html") (renderHtml html)
 
 syncImages config = do
     print "Sync images ..."

@@ -8,6 +8,8 @@ import System.Posix
 import Data.List.Extra (splitOn)
 import Data.List (group, sort)
 import Network.URL
+import Prelude hiding (writeFile)
+import Data.Text.Lazy.IO (writeFile)
 
 type EitherS = Either String -- Left is the error info
 
@@ -62,6 +64,11 @@ getFileSize path = getFileStatus path >>= \s -> return $ fileSize s
 
 getSubContents path = filter (\n -> n /= "." && n /= "..") <$> getDirectoryContents path
 
+filterSubContent f path = (map (path </>) <$> getSubContents path) >>= filterM f
+
+getSubFiles = filterSubContent doesFileExist
+getSubDirs  = filterSubContent doesDirectoryExist
+
 getFileDict path = do
     contents <- getSubContents path
     let contentsDict = zip (map (path </>) contents) contents
@@ -69,7 +76,6 @@ getFileDict path = do
     files    <- filterM (doesFileExist . fst) contentsDict
     dict     <- concat <$> mapM getFileDict dirs
     return $ dict ++ files
-
 
 splitOnPath = filter (/= "") . splitOn "/"
 
@@ -85,6 +91,20 @@ dropPrefix prefix path =
              Just $ concatPath $ drop (length prefix') path'
         else Nothing
 
+dropParent path = last $ splitOnPath path
 
 filterJust :: Eq x => [Maybe x] -> [x]
 filterJust = map (\(Just x) -> x) . filter (/= Nothing)
+
+-- Create all missing directories
+writeFileRobust path content = do
+    let segs = splitOnPath path
+    -- print $ "writeFileRobust: " ++ show segs
+    if length segs <= 1 then
+        writeFile path content
+        else do
+            let segs' = take (length segs - 1) segs
+            let parentDir = concatPath segs'
+            createDirectoryIfMissing True parentDir
+            writeFile path content
+

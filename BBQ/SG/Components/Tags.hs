@@ -26,7 +26,7 @@ tagsGen headers config metas layout =
         tags = M.keys m
         infoDict = map (\tag ->
                             let (Just metas) = M.lookup tag m
-                            in (tag, map (\meta@(Meta_ (Just t) _ _ _ p) -> (t, p)) metas)
+                            in (tag, map (\meta@(Meta_ (Just t) _ _ _ p) -> (t, ".." </> p)) metas)
                        ) tags
 
         genTagPage (tagName, list) = (toURL tagName, htmlTemplate

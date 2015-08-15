@@ -52,11 +52,15 @@ The `Posts.hs`, `Index.hs` and `Tags.hs` are all layout scripts. For examples yo
 Although this is the workflow I designed the `BBQ-SG` with in mind, but you are free to choose another style. Happy blogging :)
 
 ## Tickets
+* Use absolute path to identify the resources
+* Naming conflict of `page` and `posts`
+* Drop the boiler platecode in configuration while perserving typechecking goodness
 * Better layout framework: Give user enough choices while not complicating the APIs (Should be intuitive, maybe trying to make your own blog layout better would help on this?)
-
-## Features in planning
 * Revision history by analyzing git commits
 * Theme system
+* General Content Caching: esp. the tags file
+* Support for other sections: `wiki` and `posts`
+* How to merge the front-end element, such as the HTML/CSS shape of a button, a tag ....
 
 ## Structure
 You can think there are five abstract layers:

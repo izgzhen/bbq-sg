@@ -11,6 +11,12 @@ data Config = Config_ {
     _postsSrc    :: FilePath,
     _postsURL    :: FilePath,
 
+    _pageSrc     :: FilePath,
+    _pageURL     :: FilePath,
+
+    _wikiSrc     :: FilePath,
+    _wikiURL     :: FilePath,
+
     _imgSrc      :: FilePath,
     _imgURL      :: FilePath,
 
@@ -27,6 +33,7 @@ data Config = Config_ {
 }
 
 _postsSta config  = _staticDir config </> _postsURL config
+_pageSta config   = _staticDir config </> _pageURL config
 _imgSta config    = _staticDir config </> _imgURL config
 _cssSta config    = _staticDir config </> _cssURL config
 _jsSta config     = _staticDir config </> _jsURL config
