@@ -53,8 +53,8 @@ wikiGen headers config layout = go (_wikiSrc config) (_wikiURL config) renderPag
             mapM_ (\d -> go d (url </> dropParent d) renderPage) dirs
 
         renderPage :: String -> [(String, FilePath)] -> Maybe FilePath -> FilePath -> IO ()
-        renderPage title menulist maybeMarkdown url = do
-            -- print $ "rendering " ++ url
+        renderPage titleExt menulist maybeMarkdown url = do
+            let title = dropExtensions titleExt
             case maybeMarkdown of
                 Just filepath -> do
                     eitherText <- readFileMaybe filepath

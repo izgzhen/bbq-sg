@@ -18,6 +18,14 @@ data Date = Date_ {
 instance Show Date where
     show (Date_ d m y) = show y ++ "." ++ show m ++ showMaybe d
 
+instance Ord Date where
+    compare (Date_ d1 m1 y1) (Date_ d2 m2 y2) =
+        case compare y1 y2 of
+            EQ  -> case compare m1 m2 of
+                EQ  -> compare d1 d2                
+                neq -> neq
+            neq -> neq
+
 data Email = Email String String deriving (Eq)
 
 instance Show Email where

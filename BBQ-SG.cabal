@@ -1,11 +1,10 @@
 name:                bbq-sg
-version:             0.3.0.0
--- synopsis:            
--- description:         
+version:             0.3.2.1
+synopsis:            Static pages generator
+homepage:            https://github.com/izgzhen/bbq-sg
 license:             MIT
 author:              Zhen Zhang
 maintainer:          izgzhen@gmail.com
--- copyright:           
 category:            Web
 build-type:          Simple
 extra-source-files:  README.md
@@ -13,31 +12,34 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     BBQ.SG,
-                       BBQ.SG.Plugin
-  other-modules:       BBQ.SG.Tools.IO,
-                       BBQ.SG.Misc,
-                       BBQ.SG.Tools.Parser,
-                       BBQ.SG.Template,
-                       BBQ.SG.Meta,
                        BBQ.SG.Config,
+                       BBQ.SG.Plugin
+  other-modules:
+                       BBQ.SG.Meta,
+                       BBQ.SG.Misc,
+                       BBQ.SG.Template,
                        BBQ.SG.Components.HomePage,
-                       BBQ.SG.Components.Page,
+                       BBQ.SG.Components.Pages,
                        BBQ.SG.Components.Posts,
                        BBQ.SG.Components.Tags,
+                       BBQ.SG.Components.Wiki,
                        BBQ.SG.Tools.AutoKeywords,
+                       BBQ.SG.Tools.IO,
+                       BBQ.SG.Tools.Parser,
+                       BBQ.SG.Tools.Synopsis,
                        BBQ.SG.Tools.WordCount
 
   other-extensions:    OverloadedStrings
   build-depends:       base >=4.7 && <4.8,
-                       markdown >=0.1 && <0.2,
-                       blaze-html >=0.7 && <0.8,
                        filepath >=1.3 && <1.4,
-                       text >=1.1 && <1.2,
+                       blaze-html >=0.7 && <0.8,
                        extra >=1.1 && <1.2,
-                       directory >= 1.2 &&  < 1.3,
-                       time,
-                       containers,
-                       unix,
-                       url
-  -- hs-source-dirs:      
+                       directory >=1.2 && <1.3,
+                       unix >=2.7 && <2.8,
+                       url >=2.1 && <2.2,
+                       text >=1.1 && <1.2,
+                       time >=1.4 && <1.5,
+                       containers >=0.5 && <0.6,
+                       markdown >=0.1 && <0.2
+  hs-source-dirs:      src
   default-language:    Haskell2010

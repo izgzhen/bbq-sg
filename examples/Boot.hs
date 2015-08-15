@@ -1,5 +1,5 @@
--- Bootstraping tool for a empty post
-
+-- Bootstraping tool for BBQ-SG
+-- I don't know where to put this tool now
 import BBQ.SG.Plugin
 import System.Environment
 import Config
@@ -24,4 +24,3 @@ template today = "\n---\n" ++
                  "+ Date: " ++ today ++ "\n" ++
                  "+ Author: " ++ defaultAuthor ++ "\n"
 
-defaultAuthor  = "Your Name <youremail@somewhere>"

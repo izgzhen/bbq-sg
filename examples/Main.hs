@@ -1,18 +1,9 @@
 import BBQ.SG
-import Index
+import HomePage
 import Posts
 import Tags
+import Page
 import Config
+import Wiki
 
-config = Config_ staticDir
-                 markdownDir
-                 imgSrcDir
-                 postsDir
-                 imgStaDir
-                 jsSrcDir
-                 jsStaDir
-                 cssSrcDir
-                 cssStaDir
-                 analyticsId
-
-main = runSG config indexLayout postsLayout tagsLayout
+main = runSG config homeLayout postsLayout tagsLayout pageLayout wikiLayout

@@ -3,6 +3,8 @@ module BBQ.SG.Tools.IO (
 , withPostMarkdowns
 , withPage
 , syncImages
+, syncJs
+, syncCss
 , getJsCSS
 ) where
 
@@ -36,7 +38,7 @@ prepareFolders config = do mapM_ (createDirectoryIfMissing True)
 
 
 
-withPostMarkdowns :: Config -> ((Text, Meta) -> Synopsis -> M.Map FilePath Int -> Html) -> IO [Meta]
+withPostMarkdowns :: Config -> ((Text, Meta) -> Synopsis -> [(FilePath, Int)] -> Html) -> IO [Meta]
 withPostMarkdowns config processor = do
     print "Generating posts..."
 
@@ -63,7 +65,7 @@ withPostMarkdowns config processor = do
         let (synopsis, body') = extract str'
         let mdpath = (_postsSrc config) </> path ++ ".md"
         let Just keywords = M.lookup mdpath keywordsGroup
-        return $ (meta, processor (pack body', meta) synopsis keywords) : pairs
+        return $ (meta, processor (pack body', meta) synopsis (M.toList keywords)) : pairs
 
 -- Generate by URL
 withPage url config html = do
@@ -111,8 +113,6 @@ syncResource srcDir staDir srcRoot staRoot = do
     mapM_ (\commonPath -> do
             srcSize <- getFileSize (srcRoot </> commonPath)
             staSize <- getFileSize (staRoot </> commonPath)
-            -- srcMod  <- getModificationTime commonPath
-            -- staMod  <- getModificationTime (_staticDir config </> commonPath)
 
             if srcSize /= staSize then do
                     print $ "updating " ++ show (staRoot </> commonPath) ++ " with " ++ show (srcRoot </> commonPath)

@@ -25,13 +25,13 @@ f config headers layout (text, meta) synopsis keywords = htmlTemplate title head
         mainHtml = markdown def text
         title    = showMaybeStr $ _title meta
         html     = pageTemplate title $ do
-            layout
-                synopsisHtml
-                mainHtml
-                (showMaybe $ _author meta)
-                (showMaybe $ _date meta)
-                (addTagLink config (_tags meta))
-            mathjax
-            showKeyWords keywords
+                        layout
+                            synopsisHtml
+                            mainHtml
+                            (showMaybe $ _author meta)
+                            (showMaybe $ _date meta)
+                            (addTagLink config (_tags meta))
+                            keywords
+                        mathjax
 
 addTagLink config tags = map (\tag -> (tag, ".." </> _tagsURL config </> toURL tag ++ ".html")) tags

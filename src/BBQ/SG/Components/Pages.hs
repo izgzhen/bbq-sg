@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module BBQ.SG.Components.Page (pageGen) where
+module BBQ.SG.Components.Pages (pagesGen) where
 import BBQ.SG.Tools.IO
 import System.FilePath ((</>), dropExtensions)
 import BBQ.SG.Template
@@ -12,7 +12,7 @@ import BBQ.SG.Config
 import Text.Markdown
 import Data.Text.Lazy (pack)
 
-pageGen headers config meta layout = do
+pagesGen headers config meta layout = do
     print "Generating pages..."
 
     filenames <- map dropExtensions <$> getFilesEndWith (_pageSrc config) ".md"

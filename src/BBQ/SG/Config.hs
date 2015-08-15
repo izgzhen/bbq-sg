@@ -22,13 +22,16 @@ data Config = Config_ {
 
     _cssSrc      :: FilePath,
     _cssURL      :: FilePath,
+    _cssAbsURL   :: FilePath,
 
     _jsSrc       :: FilePath,
     _jsURL       :: FilePath,
+    _jsAbsURL    :: FilePath,
 
     _tagsURL     :: FilePath,
 
     _blacklist   :: FilePath,
+    _modCache    :: FilePath,
     _analyticsId :: String
 }
 

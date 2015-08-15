@@ -25,6 +25,3 @@ pageTemplate title mainHtml = do
     H.h1 $ toHtml title
     H.hr
     mainHtml
-    H.a ! A.href "../index.html"
-        $ "Back to index page"
-

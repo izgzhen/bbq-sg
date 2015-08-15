@@ -1,17 +1,28 @@
 module Posts where
 
-import BBQ.SG.Plugin
+import qualified BBQ.SG.Plugin as P
 import qualified Text.Blaze.Html5 as H
+import Config
 
-postsLayout :: H.Html -> H.Html -> String -> String -> [String] -> H.Html
-postsLayout synopsis mainHtml author date tags = do
-    H.h5 $ H.toHtml "Synopsis"
+-- postsLayout :: H.Html -> H.Html -> String -> String -> [(String, FilePath)] -> H.Html
+postsLayout synopsis mainHtml author date tagsMap keyWords = do
+    P.h5 $ H.toHtml (author ++ " " ++ date)
+    P.h3 $ H.toHtml "[Synopsis]"
     H.section $ synopsis
-    H.h5 $ H.toHtml (author ++ " " ++ date)
+    goBackFromPost
     H.hr
-    H.section $ mainHtml
-    H.section $ H.toHtml $ "Tags: " ++ listify tags
 
+    H.section $ do
+        P.h3 "[Content]"
+        mainHtml
+
+    H.section $ do
+        P.h3 "[Meta information]"
+        P.h5 "Tags:"
+        P.urlList tagsMap
+        P.p $ "Keywords (Unstable): " ++ listify (map fst keyWords)
+
+    myCopyRight
 
 listify []     = ""
 listify (w:[]) = w

@@ -5,11 +5,13 @@ module BBQ.SG.Plugin (
 , mathjax
 , urlList
 , BBQ.SG.Plugin.p
+, BBQ.SG.Plugin.a
+, BBQ.SG.Plugin.h3
+, BBQ.SG.Plugin.h5
 , showMaybe
 , showMaybeStr
 , copyRight
 , getToday
-, BBQ.SG.Plugin.a
 , Meta(..)
 , scriptList
 , cssList
@@ -58,9 +60,15 @@ a text addr = H.a ! A.href (H.toValue addr)
                   $ H.toHtml text
 
 
+h3 :: H.ToMarkup a => a -> H.Html
+h3 = H.h3 . H.toHtml
+
+h5 :: H.ToMarkup a => a -> H.Html
+h5 = H.h5 . H.toHtml
+
 copyRight :: String -> String -> H.Html
 copyRight author year =
-  H.div $ do
+  H.div ! A.id "copyright" $ do
     H.p $ H.toHtml $ "Copyright Reserved, " ++ author ++ ", " ++ year
     H.p $ "Generated with BBQ Static Generator"
 
