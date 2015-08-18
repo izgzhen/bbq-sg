@@ -12,7 +12,8 @@ import BBQ.SG.Config
 import Text.Markdown
 import Data.Text.Lazy (pack)
 
-pagesGen headers config meta layout = do
+pagesGen config meta (layout, resources) = do
+    let headers = map (resourceToHeader config) resources
     print "Generating pages..."
 
     filenames <- map dropExtensions <$> getFilesEndWith (_pageSrc config) ".md"

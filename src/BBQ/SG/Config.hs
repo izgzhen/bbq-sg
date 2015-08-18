@@ -1,5 +1,5 @@
 module BBQ.SG.Config where
-
+import BBQ.SG.Plugin
 import System.FilePath ((</>))
 
 -- The configuration which needs to be provided by user
@@ -41,3 +41,14 @@ _imgSta config    = _staticDir config </> _imgURL config
 _cssSta config    = _staticDir config </> _cssURL config
 _jsSta config     = _staticDir config </> _jsURL config
 _tagsSta config   = _staticDir config </> _tagsURL config
+
+
+resourceToHeader config (InternalJs p)  = scriptify (_jsAbsURL  config  </> p)
+resourceToHeader config (InternalCss p) = cssify (_cssAbsURL config  </> p)
+resourceToHeader config (ExternalJs p)  = scriptify p
+resourceToHeader config (ExternalCss p) = cssify p
+
+data ResourceSpec = InternalJs  String
+                  | InternalCss String
+                  | ExternalJs  String
+                  | ExternalCss String

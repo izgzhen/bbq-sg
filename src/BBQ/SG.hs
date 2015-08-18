@@ -3,6 +3,7 @@
 module BBQ.SG (
   Config(..)
 , runSG
+, BBQ.SG.Config.ResourceSpec(..)
 ) where
 
 import BBQ.SG.Plugin
@@ -20,31 +21,24 @@ import BBQ.SG.Components.Wiki
 import BBQ.SG.Tools.IO
 import BBQ.SG.Misc
 
-runSG config indexLayout postsLayout tagsLayout pageLayout wikiLayout = do
-    (js, css) <- getJsCSS config
-    let jsRoutes  = map (_jsAbsURL config  </>) js
-    let cssRoutes = map (_cssAbsURL config </>) css
-
-    let ana = analytics $ _analyticsId config
-    let headers = [ scriptList jsRoutes, cssList cssRoutes ] -- Don't use analytics
-
+runSG config indexUser postsUser tagsUser pageUser wikiUser = do
     -- Mkdir if void
     prepareFolders config
 
     -- Generate posts and collect meta info
-    metas <- postGen headers config postsLayout
+    metas <- postGen config postsUser
 
     -- Generate Homepage
-    homePageGen headers indexLayout config metas
+    homePageGen config metas indexUser
 
     -- Generate Tags page
-    tagsGen headers config metas tagsLayout
+    tagsGen config metas tagsUser
 
     -- Generate other pages
-    pagesGen headers config meta pageLayout
+    pagesGen config meta pageUser
 
     -- Generate wiki
-    wikiGen headers config wikiLayout
+    wikiGen config wikiUser
 
     -- Sync Images
     syncImages config

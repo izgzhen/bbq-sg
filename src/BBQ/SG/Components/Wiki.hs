@@ -26,7 +26,7 @@ import Text.Blaze.Html5 (toHtml)
 
     
 
-wikiGen headers config layout = go (_wikiSrc config) (_wikiURL config) renderPage
+wikiGen config (layout, resources) = go (_wikiSrc config) (_wikiURL config) renderPage
     where
         go path url renderPage = do
             files <- filter (\p -> takeExtensions p == ".md") <$> getSubFiles path
@@ -55,6 +55,7 @@ wikiGen headers config layout = go (_wikiSrc config) (_wikiURL config) renderPag
         renderPage :: String -> [(String, FilePath)] -> Maybe FilePath -> FilePath -> IO ()
         renderPage titleExt menulist maybeMarkdown url = do
             let title = dropExtensions titleExt
+            let headers = map (resourceToHeader config) resources
             case maybeMarkdown of
                 Just filepath -> do
                     eitherText <- readFileMaybe filepath

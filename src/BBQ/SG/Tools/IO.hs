@@ -105,7 +105,7 @@ syncResource srcDir staDir srcRoot staRoot = do
           ) notInSrc
     mapM_ (\new     -> do
                 print $ "add new " ++ show (staRoot </> new)
-                copyFile (srcRoot </> new) (staRoot </> new)
+                copyFileRobust (srcRoot </> new) (staRoot </> new)
           ) notInSta
 
     let common = toList $ intersection src static
@@ -116,7 +116,7 @@ syncResource srcDir staDir srcRoot staRoot = do
 
             if srcSize /= staSize then do
                     print $ "updating " ++ show (staRoot </> commonPath) ++ " with " ++ show (srcRoot </> commonPath)
-                    copyFile (srcRoot </> commonPath) (staRoot </> commonPath)
+                    copyFileRobust (srcRoot </> commonPath) (staRoot </> commonPath)
                 else return ()
           ) common
 

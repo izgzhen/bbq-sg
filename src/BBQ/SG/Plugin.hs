@@ -13,8 +13,8 @@ module BBQ.SG.Plugin (
 , copyRight
 , getToday
 , Meta(..)
-, scriptList
-, cssList
+, scriptify
+, cssify
 , showKeyWords
 ) where
 
@@ -38,6 +38,7 @@ analytics analyticsId = H.script $ H.toMarkup string
             "m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)" ++ 
             "})(window,document,'script','//www.google-analytics.com/analytics.js','ga');" ++
             "ga('create', '" ++ analyticsId ++ "', 'auto'); ga('send', 'pageview');"
+
 
 mathjax :: H.Html
 mathjax = do
@@ -78,17 +79,15 @@ getToday = do
 
 
 
-scriptList :: [FilePath] -> H.Html
-scriptList scripts = mapM_ (\s -> H.script ! A.type_ "text/javascript"
-                                           ! A.src   (H.toValue s)
-                                           $ ""
-                           ) scripts
+scriptify :: FilePath -> H.Html
+scriptify path = H.script ! A.type_ "text/javascript"
+                          ! A.src   (H.toValue path)
+                          $ ""
 
-cssList :: [FilePath] -> H.Html
-cssList csses = mapM_ (\c -> H.link ! A.href  (H.toValue c)
-                                    ! A.rel   "stylesheet"
-                                    ! A.type_ "text/css"
-                      ) csses
+cssify :: FilePath -> H.Html
+cssify path = H.link ! A.href  (H.toValue path)
+                     ! A.rel   "stylesheet"
+                     ! A.type_ "text/css"
 
 
 showKeyWords :: M.Map String Int -> H.Html

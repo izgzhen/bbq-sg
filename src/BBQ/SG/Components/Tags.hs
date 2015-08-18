@@ -21,7 +21,7 @@ collectTags meta m = foldr (f meta) m (_tags meta)
                     Just metas -> meta : metas
 
 
-tagsGen headers config metas layout = 
+tagsGen config metas (layout, resources) = 
     let m = foldr collectTags M.empty metas
         tags = M.keys m
         infoDict = map (\tag ->
@@ -31,7 +31,7 @@ tagsGen headers config metas layout =
 
         genTagPage (tagName, list) = (toURL tagName, htmlTemplate
                                                      "Tag"
-                                                     headers
+                                                     (map (resourceToHeader config) resources)
                                                      (pageTemplate ("Tag: " ++ tagName) (layout list)))
 
         htmls = map genTagPage infoDict

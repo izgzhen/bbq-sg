@@ -59,6 +59,7 @@ Although this is the workflow I designed the `BBQ-SG` with in mind, but you are 
 * Theme system
 * Cache system
 * The size of picture should be limited ...
+* The js/css usage should be more flexible
 
 ## FUTURE
 + Revision history by analyzing git commits

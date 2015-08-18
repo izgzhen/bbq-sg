@@ -1,10 +1,10 @@
 -- Word Counter
 module BBQ.SG.Tools.WordCount where
 import qualified Data.Map as M
-import Data.List.Extra (split)
+import Data.List.Split (splitWhen)
 import Data.List (sortBy)
 
-splitText = filter (/= "") . split (`elem` ",.\n ")
+splitText = filter (/= "") . splitWhen (`elem` ",.\n ")
 
 -- foldr :: forall a b. (a -> b -> b) -> b -> [a] -> b
 count :: String -> M.Map String Int

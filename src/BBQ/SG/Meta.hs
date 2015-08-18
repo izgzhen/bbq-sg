@@ -1,7 +1,6 @@
 module BBQ.SG.Meta where
-import Data.List.Extra (splitOn)
-import Data.List(sort, group)
-import System.FilePath(FilePath)
+import Data.List (sort, group)
+import System.FilePath (FilePath)
 import BBQ.SG.Misc
 -- Haskell's Date lib is awkward to use
 

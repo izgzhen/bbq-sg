@@ -5,7 +5,7 @@ import Control.Monad
 import System.Directory
 import System.FilePath (FilePath(..), (</>), takeExtensions, dropExtensions)
 import System.Posix
-import Data.List.Extra (splitOn)
+import Data.List.Split (splitOn)
 import Data.List (group, sort)
 import Network.URL
 import Prelude hiding (writeFile)
@@ -44,10 +44,6 @@ showMaybe (Just a) = show a
 
 showMaybeStr Nothing  = ""
 showMaybeStr (Just s) = s
-
--- example: "./static/img" -> "./img" with "./static" to drop
-dropFirstDir prefix str   = "." ++ (head . tail $ splitOn prefix str)
-
 
 getFilesEndWith path ext = do
     names <- getDirectoryContents path
@@ -97,14 +93,18 @@ filterJust :: Eq x => [Maybe x] -> [x]
 filterJust = map (\(Just x) -> x) . filter (/= Nothing)
 
 -- Create all missing directories
-writeFileRobust path content = do
+ioRobust path io = do
     let segs = splitOnPath path
     -- print $ "writeFileRobust: " ++ show segs
     if length segs <= 1 then
-        writeFile path content
+        io
         else do
             let segs' = take (length segs - 1) segs
             let parentDir = concatPath segs'
             createDirectoryIfMissing True parentDir
-            writeFile path content
+            io
+
+writeFileRobust path content = ioRobust path (writeFile path content)
+copyFileRobust src dst = ioRobust dst (copyFile src dst)
+
 
