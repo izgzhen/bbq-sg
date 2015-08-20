@@ -14,11 +14,11 @@ import Data.Text.Lazy (pack)
 
 pagesGen config meta (layout, resources) = do
     let headers = map (resourceToHeader config) resources
-    print "Generating pages..."
+    putStrLn "Generating pages..."
 
     filenames <- map dropExtensions <$> getFilesEndWith (_pageSrc config) ".md"
 
-    print filenames
+    debugPrint config $ "pages: " ++ show filenames
 
     contents  <- mapM (\filename -> readFileMaybe $ (_pageSrc config) </> filename ++ ".md") filenames
 

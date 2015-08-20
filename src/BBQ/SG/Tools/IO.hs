@@ -40,7 +40,7 @@ prepareFolders config = do mapM_ (createDirectoryIfMissing True)
 
 withPostMarkdowns :: Config -> ((Text, Meta) -> Synopsis -> [(FilePath, Int)] -> Html) -> IO [Meta]
 withPostMarkdowns config processor = do
-    print "Generating posts..."
+    putStrLn "Generating posts..."
 
     filenames <- map dropExtensions <$> getFilesEndWith (_postsSrc config) ".md"
 
@@ -49,8 +49,7 @@ withPostMarkdowns config processor = do
     keywordsGroup <- generateKeyWords config
 
     case foldr (withFile $ M.fromList keywordsGroup) (Right []) (zip contents filenames) of
-        Left errMsg      -> do print $ "Error: " ++ errMsg
-                               return []
+        Left errMsg      -> error $ "Error: " ++ errMsg
         Right collection -> do
             mapM_ (\(html, filename) -> writeFile (_postsSta config </> filename ++ ".html") (renderHtml html))
                  $ zip (map snd collection) filenames
@@ -69,19 +68,19 @@ withPostMarkdowns config processor = do
 
 -- Generate by URL
 withPage url config html = do
-    print $ "Generating page " ++ url ++ " ..."
+    debugPrint config $ "Generating page " ++ url ++ " ..."
     writeFileRobust (_staticDir config </> url ++ ".html") (renderHtml html)
 
 syncImages config = do
-    print "Sync images ..."
+    putStrLn "Sync images ..."
     syncResource (_imgSrc config) (_imgSta config) (_srcDir config) (_staticDir config)
 
 syncJs config = do
-    print "Sync JavaScripts ..."
+    putStrLn "Sync JavaScripts ..."
     syncResource (_jsSrc config) (_jsSta config)  (_srcDir config) (_staticDir config)
 
 syncCss config = do
-    print "Sync CSS ..."
+    putStrLn "Sync CSS ..."
     syncResource (_cssSrc config) (_cssSta config)  (_srcDir config) (_staticDir config)
 
 

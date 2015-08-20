@@ -56,10 +56,12 @@ The `Posts.hs`, `Index.hs` and `Tags.hs` etc. are all layout scripts. For exampl
 Although this is the workflow I designed the `BBQ-SG` with in mind, but you are free to choose another style. Happy blogging :)
 
 ## Tickets
-* Theme system
 * Cache system
 * The size of picture should be limited ...
-* The js/css usage should be more flexible
+* Developer mode -- More convenient administration of resource loading path
+* The encoding of HTML sucks...maybe we need to replace the `%` with `-` so it is more legal
+* bench info in DEBUG mode
+* fix the $LaTeX$ formulas
 
 ## FUTURE
 + Revision history by analyzing git commits
@@ -81,8 +83,6 @@ Use the dependency pair to facilitate the cache write system.
 
 We can expose a handler return readers `[Reader]` and a writer `Writer`. When the Monad is evaluated, the IO will first get cache table and compare with readers, if all readers are not updated, then the writer will be discarded; or it will do the actual writing. Remember, due to laziness, when the writer is discarded, the read will not happen as well.
 
-## Theme system
 
 
-
-
+˘

@@ -1,9 +1,10 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
 
 module BBQ.SG (
   Config(..)
 , runSG
 , BBQ.SG.Config.ResourceSpec(..)
+, DevMode(..)
 ) where
 
 import BBQ.SG.Plugin
@@ -40,6 +41,13 @@ runSG config indexUser postsUser tagsUser pageUser wikiUser = do
     -- Generate wiki
     wikiGen config wikiUser
 
-    -- Sync Images
+    -- Sync Resources
     syncImages config
+    syncJs config
+    syncCss config
 
+    putStrLn "\n>>>>>>>> AdditionalInfo <<<<<<<<"
+    case _devmode config of
+        Preview     -> putStrLn "YOU ARE IN **PREVIEW** MODE!"
+        Production  -> putStrLn "Production code is generated"
+        Debug       -> putStrLn "now is DEBUG MODE"

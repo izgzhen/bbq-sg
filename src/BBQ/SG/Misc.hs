@@ -30,8 +30,11 @@ joinWords spliter (w:ws) = w ++ spliter ++ joinWords spliter ws
 toHeader :: String -> String
 toHeader str = let url = toURL str
                    noWhiteSpace = splitOn "%20" url
-               in  joinWords "-" noWhiteSpace
-
+                   concated = joinWords "-" noWhiteSpace
+                   replaced = map (\c -> if c == '%' then '-' else c) concated
+                   filtered  = filter (\c -> not $ c `elem` "()") replaced
+                   final = reverse $ dropWhile (== '-') $ reverse $ dropWhile (== '-') filtered
+               in final
 
 front = reverse . tail . reverse
 

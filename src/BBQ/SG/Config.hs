@@ -32,7 +32,9 @@ data Config = Config_ {
 
     _blacklist   :: FilePath,
     _modCache    :: FilePath,
-    _analyticsId :: String
+    _analyticsId :: String,
+
+    _devmode     :: DevMode
 }
 
 _postsSta config  = _staticDir config </> _postsURL config
@@ -43,8 +45,8 @@ _jsSta config     = _staticDir config </> _jsURL config
 _tagsSta config   = _staticDir config </> _tagsURL config
 
 
-resourceToHeader config (InternalJs p)  = scriptify (_jsAbsURL  config  </> p)
-resourceToHeader config (InternalCss p) = cssify (_cssAbsURL config  </> p)
+resourceToHeader config (InternalJs p)  = scriptify (_jsAbsURL  config  </> p ++ ".js")
+resourceToHeader config (InternalCss p) = cssify (_cssAbsURL config  </> p ++ ".css")
 resourceToHeader config (ExternalJs p)  = scriptify p
 resourceToHeader config (ExternalCss p) = cssify p
 
@@ -52,3 +54,13 @@ data ResourceSpec = InternalJs  String
                   | InternalCss String
                   | ExternalJs  String
                   | ExternalCss String
+
+
+data DevMode = Preview | Production | Debug deriving (Show, Eq)
+
+debugPrint config str = case _devmode config of
+    Debug -> putStrLn str
+    _ -> return ()
+
+
+

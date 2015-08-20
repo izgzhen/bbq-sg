@@ -44,8 +44,8 @@ mapper inCode ln =
                     Nothing         -> notHeaderLine inCode'
                     Just translated -> 
                         let header' = toHeader trailings
-                            tag     = "<a name=\"" ++ header' ++ "\"></a>"
-                            link    = "[" ++ trailings ++ "](#" ++ header' ++ ")"
+                            tag     = "<a name=\"" ++ header' ++ "\"></a>" -- In header
+                            link    = "[" ++ trailings ++ "](#" ++ header' ++ ")" -- In Menu
                         in (inCode', Just (translated ++ " " ++ link), "\n" ++ w ++ tag ++ trailings)
                 else (inCode', Nothing, ln)
 
