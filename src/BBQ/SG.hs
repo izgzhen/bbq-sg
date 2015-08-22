@@ -5,6 +5,7 @@ module BBQ.SG (
 , runSG
 , BBQ.SG.Config.ResourceSpec(..)
 , DevMode(..)
+, generateBlacklist
 ) where
 
 import BBQ.SG.Plugin
@@ -20,34 +21,42 @@ import BBQ.SG.Components.Tags
 import BBQ.SG.Components.Pages
 import BBQ.SG.Components.Wiki
 import BBQ.SG.Tools.IO
+import BBQ.SG.Tools.ModCache
+import BBQ.SG.Tools.AutoKeywords
 import BBQ.SG.Misc
 
 runSG config indexUser postsUser tagsUser pageUser wikiUser = do
     -- Mkdir if void
     prepareFolders config
+    maybeCache <- loadCache (_modCache config)
+    case maybeCache of
+        Nothing -> error "Loading cache error"
+        Just cache -> do
+            -- Generate posts and collect meta info
+            (metas, cache') <- postGen config cache postsUser
 
-    -- Generate posts and collect meta info
-    metas <- postGen config postsUser
+            -- Generate Homepage
+            homePageGen config metas indexUser
 
-    -- Generate Homepage
-    homePageGen config metas indexUser
+            -- Generate Tags page
+            tagsGen config metas tagsUser
 
-    -- Generate Tags page
-    tagsGen config metas tagsUser
+            -- Generate other pages
+            pagesGen config meta pageUser
 
-    -- Generate other pages
-    pagesGen config meta pageUser
+            -- Generate wiki
+            wikiGen config wikiUser
 
-    -- Generate wiki
-    wikiGen config wikiUser
+            -- Sync Resources
+            cache'' <- syncImages config cache'
+                           >>= syncJs config
+                           >>= syncCss config
 
-    -- Sync Resources
-    syncImages config
-    syncJs config
-    syncCss config
+            storeCache (_modCache config) cache''
+            
 
-    putStrLn "\n>>>>>>>> AdditionalInfo <<<<<<<<"
-    case _devmode config of
-        Preview     -> putStrLn "YOU ARE IN **PREVIEW** MODE!"
-        Production  -> putStrLn "Production code is generated"
-        Debug       -> putStrLn "now is DEBUG MODE"
+            putStrLn "\n>>>>>>>> AdditionalInfo <<<<<<<<"
+            case _devmode config of
+                Preview     -> putStrLn "YOU ARE IN **PREVIEW** MODE!"
+                Production  -> putStrLn "Production code is generated"
+                Debug       -> putStrLn "now is DEBUG MODE"

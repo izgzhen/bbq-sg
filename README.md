@@ -5,9 +5,7 @@ BBQ-SG is defined as a static generator of blog posts (not barbecue), like [mine
 
 The key idea behind this tool is that, **the whole site can be rebuild from a single folder containing all markdown raw text and its related resource like js and css**. In my design, raw text should be as *self-contained* as possible and always *human-readable* rather than hashed into some other place like a DB.
 
-Except for that, it also emphasizes the extensibility and openness. The project is always going towards neat separation of core logic, layout and user content.
-
-When I completed the Cache system and Theme system and have a more usable version, I might write a post about this generator.
+Except for that, it also emphasizes the **extensibility and openness**. The project is always going towards neat **separation of core logic, layout and user content**.
 
 ## Getting started
 I organized my own workflow like this:
@@ -55,17 +53,6 @@ The `Posts.hs`, `Index.hs` and `Tags.hs` etc. are all layout scripts. For exampl
 
 Although this is the workflow I designed the `BBQ-SG` with in mind, but you are free to choose another style. Happy blogging :)
 
-## Tickets
-* Cache system
-* The size of picture should be limited ...
-* Developer mode -- More convenient administration of resource loading path
-* The encoding of HTML sucks...maybe we need to replace the `%` with `-` so it is more legal
-* bench info in DEBUG mode
-* fix the $LaTeX$ formulas
-
-## FUTURE
-+ Revision history by analyzing git commits
-
 ## Structure
 You can think there are five abstract layers:
 
@@ -77,12 +64,11 @@ You can think there are five abstract layers:
 
 The users write `driver` code, and call the `interface`, which is composed of `components`, like `posts`, `tags`, `homepage` etc. But the realization of components needs a lot of tools, like `syncResource`, `parseMeta`, `getFileList` and `getMarkdowns`, which interacts with file system and processing texts, all nitty-gritty tools. The `Definitions` defines the configuration items and meta info of a post. Mostly declarations.
 
+## Tickets
+* bench info in DEBUG mode (needs online)
+* fix the $LaTeX$ formulas, needs online as well :( 
+* User's tags as whitelist
 
-## Cache system
-Use the dependency pair to facilitate the cache write system.
+## FUTURE
++ Revision history by analyzing git commits (or maybe some APIs are open?)
 
-We can expose a handler return readers `[Reader]` and a writer `Writer`. When the Monad is evaluated, the IO will first get cache table and compare with readers, if all readers are not updated, then the writer will be discarded; or it will do the actual writing. Remember, due to laziness, when the writer is discarded, the read will not happen as well.
-
-
-
-˘

@@ -5,7 +5,6 @@ module BBQ.SG.Tools.IO (
 , syncImages
 , syncJs
 , syncCss
-, getJsCSS
 ) where
 
 import BBQ.SG.Misc
@@ -13,6 +12,7 @@ import Data.Set (fromList, intersection, difference, toList)
 import BBQ.SG.Config
 import BBQ.SG.Meta
 import BBQ.SG.Tools.Parser
+import BBQ.SG.Tools.ModCache
 import BBQ.SG.Tools.AutoKeywords
 import BBQ.SG.Tools.Synopsis
 import Text.Blaze.Html.Renderer.Text
@@ -38,22 +38,32 @@ prepareFolders config = do mapM_ (createDirectoryIfMissing True)
 
 
 
-withPostMarkdowns :: Config -> ((Text, Meta) -> Synopsis -> [(FilePath, Int)] -> Html) -> IO [Meta]
-withPostMarkdowns config processor = do
+withPostMarkdowns :: Config -> CacheMap -> ((Text, Meta) -> Synopsis -> [(FilePath, Int)] -> Html) -> IO ([Meta], CacheMap)
+withPostMarkdowns config cache processor = do
     putStrLn "Generating posts..."
 
     filenames <- map dropExtensions <$> getFilesEndWith (_postsSrc config) ".md"
 
-    contents  <- mapM (\filename -> readFileMaybe $ (_postsSrc config) </> filename ++ ".md") filenames
+    (filenames', cache') <- foldM (\(modfiles, cache) file -> do
+                                      let srcPath = _postsSrc config </> file ++ ".md"
+                                      modTime <- getModificationTime srcPath
+                                      if isNewEntry (srcPath, modTime) cache then do
+                                            putStrLn $ "updating with " ++ show (srcPath, modTime)
+                                            return (modfiles ++ [file], updateEntry (srcPath, modTime) cache)
+                                        else return (modfiles, cache) )
+                                  ([], cache)
+                                  filenames
+
+    contents  <- mapM (\filename -> readFileMaybe $ (_postsSrc config) </> filename ++ ".md") filenames'
 
     keywordsGroup <- generateKeyWords config
 
-    case foldr (withFile $ M.fromList keywordsGroup) (Right []) (zip contents filenames) of
+    case foldr (withFile $ M.fromList keywordsGroup) (Right []) (zip contents filenames') of
         Left errMsg      -> error $ "Error: " ++ errMsg
         Right collection -> do
             mapM_ (\(html, filename) -> writeFile (_postsSta config </> filename ++ ".html") (renderHtml html))
-                 $ zip (map snd collection) filenames
-            return $ map fst collection
+                 $ zip (map snd collection) filenames'
+            return $ (map fst collection, cache')
   where
     withFile :: M.Map FilePath (M.Map String Int) -> (EitherS String, FilePath) -> EitherS [(Meta, Html)] -> EitherS [(Meta, Html)]
     withFile keywordsGroup (maybeContent, path) mPairs = do
@@ -71,27 +81,20 @@ withPage url config html = do
     debugPrint config $ "Generating page " ++ url ++ " ..."
     writeFileRobust (_staticDir config </> url ++ ".html") (renderHtml html)
 
-syncImages config = do
+syncImages config cache = do
     putStrLn "Sync images ..."
-    syncResource (_imgSrc config) (_imgSta config) (_srcDir config) (_staticDir config)
+    syncResource (_imgSrc config) (_imgSta config) (_srcDir config) (_staticDir config) cache
 
-syncJs config = do
+syncJs config cache = do
     putStrLn "Sync JavaScripts ..."
-    syncResource (_jsSrc config) (_jsSta config)  (_srcDir config) (_staticDir config)
+    syncResource (_jsSrc config) (_jsSta config)  (_srcDir config) (_staticDir config) cache
 
-syncCss config = do
+syncCss config cache = do
     putStrLn "Sync CSS ..."
-    syncResource (_cssSrc config) (_cssSta config)  (_srcDir config) (_staticDir config)
+    syncResource (_cssSrc config) (_cssSta config)  (_srcDir config) (_staticDir config) cache
 
 
-getJsCSS config = do
-    syncJs config
-    syncCss config
-    js  <- getFilesEndWith (_jsSrc config) ".js"
-    css <- getFilesEndWith (_cssSrc config) ".css"
-    return (js, css)
-
-syncResource srcDir staDir srcRoot staRoot = do
+syncResource srcDir staDir srcRoot staRoot cache = do
 
     src    <- fromList . filterJust . map (dropPrefix srcRoot . fst) <$> getFileDict srcDir
     static <- fromList . filterJust . map (dropPrefix staRoot . fst) <$> getFileDict staDir
@@ -99,25 +102,32 @@ syncResource srcDir staDir srcRoot staRoot = do
     let notInSrc = toList $ difference static src
     let notInSta = toList $ difference src static
     mapM_ (\invalid -> do
-                print $ "remove invalid " ++ show (staRoot </> invalid)
+                putStrLn $ "remove invalid " ++ show (staRoot </> invalid)
                 removeFile (staRoot </> invalid)
           ) notInSrc
     mapM_ (\new     -> do
-                print $ "add new " ++ show (staRoot </> new)
+                putStrLn $ "add new " ++ show (staRoot </> new)
                 copyFileRobust (srcRoot </> new) (staRoot </> new)
           ) notInSta
 
     let common = toList $ intersection src static
 
-    mapM_ (\commonPath -> do
-            srcSize <- getFileSize (srcRoot </> commonPath)
-            staSize <- getFileSize (staRoot </> commonPath)
+    foldM (\cache commonPath -> do
+                let srcPath = srcRoot </> commonPath
+                let staPath = staRoot </> commonPath
+                srcSize <- getFileSize srcPath -- Sanity Check
+                staSize <- getFileSize staPath
 
-            if srcSize /= staSize then do
-                    print $ "updating " ++ show (staRoot </> commonPath) ++ " with " ++ show (srcRoot </> commonPath)
-                    copyFileRobust (srcRoot </> commonPath) (staRoot </> commonPath)
-                else return ()
-          ) common
+                modTime <- getModificationTime srcPath
+
+                if isNewEntry (srcPath, modTime) cache then do
+                    putStrLn $ "updating with " ++ show (srcPath, modTime)
+                    copyFileRobust srcPath staPath
+                    return $ updateEntry (srcPath, modTime) cache
+                  else if (srcSize /= staSize) then
+                          error "IMPOSSIBLE HAPPENDS!"
+                          else return cache
+              ) cache common
 
 
 

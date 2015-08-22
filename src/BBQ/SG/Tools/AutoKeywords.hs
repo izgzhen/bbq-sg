@@ -15,15 +15,22 @@ import System.FilePath((</>))
 import BBQ.SG.Misc (getFilesEndWith)
 import qualified Data.Map as M
 import qualified Data.List as D
+import qualified Data.Set as S
 
-generateKeyWords config = do
+unique = S.toList . S.fromList
+
+generateBlacklist n config = do
     blacklist <- lines <$> readFile (_blacklist config)
     files <- map (_postsSrc config </>) <$> getFilesEndWith (_postsSrc config) ".md"
     contents <- mapM readFile files
-    let commonWords = foldr (M.unionWith (+)) M.empty $ map (reverseMap . selectHighest 30 blacklist) contents
-    let reallyCommonWords = deleteFindMaxN 30 $ reverseMap commonWords
+    let commonWords = foldr (M.unionWith (+)) M.empty $ map (reverseMap . selectHighest n blacklist) contents
+    let reallyCommonWords = deleteFindMaxN n $ reverseMap commonWords
     let blacklist' = D.union blacklist $ map snd reallyCommonWords
 
-    return $ zip files $ map (reverseMap . selectHighest 10 blacklist') contents
+    return (contents, unique blacklist', files)
 
+
+generateKeyWords config = do
+    (contents, blacklist, files) <- generateBlacklist 30 config
+    return $ zip files $ map (M.filter (>= 5) . reverseMap . selectHighest 10 blacklist) contents
 
