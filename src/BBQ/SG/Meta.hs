@@ -1,7 +1,11 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module BBQ.SG.Meta where
 import Data.List (sort, group)
 import System.FilePath (FilePath)
 import BBQ.SG.Misc
+import Data.Serialize
+import GHC.Generics (Generic)
 -- Haskell's Date lib is awkward to use
 
 type Day   = Int
@@ -12,7 +16,9 @@ data Date = Date_ {
     _day    :: Maybe Day,
     _month  :: Month,
     _year   :: Year
-} deriving (Eq)
+} deriving (Eq, Generic)
+
+instance Serialize Date
 
 instance Show Date where
     show (Date_ d m y) = show y ++ "." ++ show m ++ showMaybe d
@@ -25,7 +31,9 @@ instance Ord Date where
                 neq -> neq
             neq -> neq
 
-data Email = Email String String deriving (Eq)
+data Email = Email String String deriving (Eq, Generic)
+
+instance Serialize Email
 
 instance Show Email where
     show (Email name domain) = "<" ++ name ++ " \\AT " ++ domain ++ ">"
@@ -33,7 +41,9 @@ instance Show Email where
 data Contact = Contact_ {
     _name   :: String,
     _email  :: Email
-} deriving (Eq)
+} deriving (Eq, Generic)
+
+instance Serialize Contact
 
 instance Show Contact where
     show (Contact_ name email) = name ++ "  " ++ show email
@@ -44,5 +54,8 @@ data Meta = Meta_ {
     _author :: Maybe Contact,
     _tags   :: [String],
     _path   :: FilePath
-} deriving (Show, Eq)
+} deriving (Show, Eq, Generic)
 
+instance Serialize Meta
+
+emptyMeta = Meta_ Nothing Nothing Nothing [] ""

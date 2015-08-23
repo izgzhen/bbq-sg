@@ -26,6 +26,6 @@ pagesGen config meta (layout, resources) = do
 
     let htmlsWithLayout = map (\(a, b) -> htmlTemplate a headers $ layout a b) $ zip filenames htmls
 
-    mapM_ (\(name, html) -> withPage (_pageURL config </> name) config html) (zip filenames htmlsWithLayout)
+    mapM_ (\(name, html) -> renderPage (_pageURL config </> name) config html) (zip filenames htmlsWithLayout)
 
     

@@ -35,4 +35,4 @@ tagsGen config metas (layout, resources) =
                                                      (pageTemplate ("Tag: " ++ tagName) (layout list)))
 
         htmls = map genTagPage infoDict
-    in mapM_ (\(name, html) -> withPage (_tagsURL config </> name) config html) htmls
+    in mapM_ (\(name, html) -> renderPage (_tagsURL config </> name) config html) htmls

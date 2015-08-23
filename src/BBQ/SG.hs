@@ -5,7 +5,6 @@ module BBQ.SG (
 , runSG
 , BBQ.SG.Config.ResourceSpec(..)
 , DevMode(..)
-, generateBlacklist
 ) where
 
 import BBQ.SG.Plugin
@@ -24,10 +23,12 @@ import BBQ.SG.Tools.IO
 import BBQ.SG.Tools.ModCache
 import BBQ.SG.Tools.AutoKeywords
 import BBQ.SG.Misc
+import Control.Monad
 
 runSG config indexUser postsUser tagsUser pageUser wikiUser = do
     -- Mkdir if void
     prepareFolders config
+    when ((_devmode config) == Production) (writeFile (_modCache config) "") -- Flush cache when generate production site
     maybeCache <- loadCache (_modCache config)
     case maybeCache of
         Nothing -> error "Loading cache error"

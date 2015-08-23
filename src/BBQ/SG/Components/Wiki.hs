@@ -26,9 +26,9 @@ import Text.Blaze.Html5 (toHtml)
 
     
 
-wikiGen config (layout, resources) = go (_wikiSrc config) (_wikiURL config) renderPage
+wikiGen config (layout, resources) = go (_wikiSrc config) (_wikiURL config)
     where
-        go path url renderPage = do
+        go path url = do
             files <- filter (\p -> takeExtensions p == ".md") <$> getSubFiles path
             dirs  <- filter (\p -> head (dropParent p) /= '.') <$> getSubDirs path
             -- print files
@@ -43,17 +43,17 @@ wikiGen config (layout, resources) = go (_wikiSrc config) (_wikiURL config) rend
 
             -- print "render the index page"
             if (pathname ++ ".md") `elem` filenames then
-                renderPage pathname urlList (Just $ path </> pathname ++ ".md") (url </> pathname)
-                else renderPage pathname urlList Nothing (url </> pathname)
+                render pathname urlList (Just $ path </> pathname ++ ".md") (url </> pathname)
+                else render pathname urlList Nothing (url </> pathname)
 
             -- print "render common page"
-            mapM_ (\(p, n) -> renderPage (dropParent p) urlList (Just p) (url </> dropExtensions n)) $ zip files filenames
+            mapM_ (\(p, n) -> render (dropParent p) urlList (Just p) (url </> dropExtensions n)) $ zip files filenames
 
             -- print "recursively render directories"
-            mapM_ (\d -> go d (url </> dropParent d) renderPage) dirs
+            mapM_ (\d -> go d (url </> dropParent d)) dirs
 
-        renderPage :: String -> [(String, FilePath)] -> Maybe FilePath -> FilePath -> IO ()
-        renderPage titleExt menulist maybeMarkdown url = do
+        render :: String -> [(String, FilePath)] -> Maybe FilePath -> FilePath -> IO ()
+        render titleExt menulist maybeMarkdown url = do
             let title = dropExtensions titleExt
             let headers = map (resourceToHeader config) resources
             case maybeMarkdown of
@@ -64,10 +64,10 @@ wikiGen config (layout, resources) = go (_wikiSrc config) (_wikiURL config) rend
                             let html = markdown def (pack text)
                             let html' = layout title menulist (Just html)
                             let html'' = htmlTemplate title headers html'
-                            withPage url config html''
+                            renderPage url config html''
                             return ()
                 Nothing -> do
                     let html = layout title menulist Nothing
                     let html' = htmlTemplate title headers html
-                    withPage url config html'
+                    renderPage url config html'
                     return ()

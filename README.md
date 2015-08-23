@@ -65,10 +65,17 @@ You can think there are five abstract layers:
 The users write `driver` code, and call the `interface`, which is composed of `components`, like `posts`, `tags`, `homepage` etc. But the realization of components needs a lot of tools, like `syncResource`, `parseMeta`, `getFileList` and `getMarkdowns`, which interacts with file system and processing texts, all nitty-gritty tools. The `Definitions` defines the configuration items and meta info of a post. Mostly declarations.
 
 ## Tickets
-* bench info in DEBUG mode (needs online)
+* Enhance the DEBUG mode with single-post examplifying
+* Add more DEBUG stub code
 * fix the $LaTeX$ formulas, needs online as well :( 
 * User's tags as whitelist
+* Add Disqus plugin
+* add link to the footer ad for bbq-sg!
+* the posts have `meta`, but there are some problems in simply addding the cache layer ... First, `withMarkdownAll` should be refactored, Second, the cache layer should play well with the data retrieve requirement as well as the analysis over text.
+* Use "-" to cover the possible " " in URL, "%20" is rather dangerous
 
 ## FUTURE
-+ Revision history by analyzing git commits (or maybe some APIs are open?)
+* Wiki should be enhanced
+* 
+
 

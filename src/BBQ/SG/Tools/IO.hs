@@ -1,7 +1,7 @@
 module BBQ.SG.Tools.IO (
   prepareFolders   
-, withPostMarkdowns
-, withPage
+, renderAllPosts
+, renderPage
 , syncImages
 , syncJs
 , syncCss
@@ -38,46 +38,59 @@ prepareFolders config = do mapM_ (createDirectoryIfMissing True)
 
 
 
-withPostMarkdowns :: Config -> CacheMap -> ((Text, Meta) -> Synopsis -> [(FilePath, Int)] -> Html) -> IO ([Meta], CacheMap)
-withPostMarkdowns config cache processor = do
+renderAllPosts :: Config -> CacheMap Meta -> ((Text, Meta) -> Synopsis -> [(FilePath, Int)] -> Html) -> IO ([Meta], CacheMap Meta)
+renderAllPosts config cache processor = do
     putStrLn "Generating posts..."
 
     filenames <- map dropExtensions <$> getFilesEndWith (_postsSrc config) ".md"
 
     (filenames', cache') <- foldM (\(modfiles, cache) file -> do
-                                      let srcPath = _postsSrc config </> file ++ ".md"
-                                      modTime <- getModificationTime srcPath
-                                      if isNewEntry (srcPath, modTime) cache then do
-                                            putStrLn $ "updating with " ++ show (srcPath, modTime)
-                                            return (modfiles ++ [file], updateEntry (srcPath, modTime) cache)
-                                        else return (modfiles, cache) )
-                                  ([], cache)
-                                  filenames
+                                                  let srcPath = _postsSrc config </> file ++ ".md"
+                                                  modTime <- getModTime srcPath
+                                                  if isNewEntry srcPath modTime cache then do
+                                                        putStrLn $ "updating with " ++ show (srcPath, modTime)
+                                                        return (modfiles ++ [file], updateEntry srcPath modTime emptyMeta cache)
+                                                        else return (modfiles, cache)
+                                                )
+                                            ([], cache)
+                                            filenames
 
-    contents  <- mapM (\filename -> readFileMaybe $ (_postsSrc config) </> filename ++ ".md") filenames'
+    let paths = map (\f -> _postsSrc config </> f ++ ".md") filenames'
 
-    keywordsGroup <- generateKeyWords config
+    keywordsMap <- generateKeyWords config filenames'
 
-    case foldr (withFile $ M.fromList keywordsGroup) (Right []) (zip contents filenames') of
-        Left errMsg      -> error $ "Error: " ++ errMsg
-        Right collection -> do
-            mapM_ (\(html, filename) -> writeFile (_postsSta config </> filename ++ ".html") (renderHtml html))
-                 $ zip (map snd collection) filenames'
-            return $ (map fst collection, cache')
-  where
-    withFile :: M.Map FilePath (M.Map String Int) -> (EitherS String, FilePath) -> EitherS [(Meta, Html)] -> EitherS [(Meta, Html)]
-    withFile keywordsGroup (maybeContent, path) mPairs = do
-        pairs        <- mPairs
-        content      <- maybeContent
-        (Meta_ t d a tg _, str') <- parseMeta content
-        let meta = Meta_ t d a tg $ "posts" </> path ++ ".html"
-        let (synopsis, body') = extract str'
-        let mdpath = (_postsSrc config) </> path ++ ".md"
-        let Just keywords = M.lookup mdpath keywordsGroup
-        return $ (meta, processor (pack body', meta) synopsis (M.toList keywords)) : pairs
+    debugPrint config $ show filenames'
+
+    cache'' <- foldM (\cache (filename, m) -> do
+                        let fp = _postsSrc config </> filename ++ ".md"
+                        maybeContent <- readFileMaybe fp
+                        case renderPost m (maybeContent, filename) config processor of
+                            Left errMsg -> do
+                                putStrLn errMsg
+                                return cache'
+                            Right (meta, html) -> do
+                                writeFileRobust (_postsSta config </> filename ++ ".html") (renderHtml html)
+                                modTime <- getModTime fp
+                                return (updateEntry fp modTime meta cache)
+                        )
+                     cache'
+                     keywordsMap
+    
+    let metas = map (\p -> let (Just x) = getEntryData p cache'' in x) $ map (\f -> _postsSrc config </> f ++ ".md") filenames
+
+    return (metas, cache'')
+
+-- renderPost :: M.Map FilePath (M.Map String Int) -> (EitherS String, FilePath) -> EitherS (Meta, Html)
+renderPost keywords (maybeContent, filename) config processor = do
+    content      <- maybeContent
+    (Meta_ t d a tg _, str') <- parseMeta content
+    let meta = Meta_ t d a tg ("posts" </> dropExtensions filename ++ ".html")
+    let (synopsis, body') = extract str'
+    return (meta, processor (pack body', meta) synopsis (M.toList keywords))
+
 
 -- Generate by URL
-withPage url config html = do
+renderPage url config html = do
     debugPrint config $ "Generating page " ++ url ++ " ..."
     writeFileRobust (_staticDir config </> url ++ ".html") (renderHtml html)
 
@@ -118,12 +131,12 @@ syncResource srcDir staDir srcRoot staRoot cache = do
                 srcSize <- getFileSize srcPath -- Sanity Check
                 staSize <- getFileSize staPath
 
-                modTime <- getModificationTime srcPath
+                modTime <- getModTime srcPath
 
-                if isNewEntry (srcPath, modTime) cache then do
+                if isNewEntry srcPath modTime cache then do
                     putStrLn $ "updating with " ++ show (srcPath, modTime)
                     copyFileRobust srcPath staPath
-                    return $ updateEntry (srcPath, modTime) cache
+                    return $ updateEntry srcPath modTime emptyMeta cache
                   else if (srcSize /= staSize) then
                           error "IMPOSSIBLE HAPPENDS!"
                           else return cache
