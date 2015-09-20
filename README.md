@@ -7,6 +7,8 @@ The key idea behind this tool is that, **the whole site can be rebuild from a si
 
 Except for that, it also emphasizes the **extensibility and openness**. The project is always going towards neat **separation of core logic, layout and user content**.
 
+> BBQ-SG is used for my personal, experimental purposes. If you'd like to find a stable, powerful, mature and more conventional static site generator in Haskell, you might be interested in [Hakyll](https://github.com/jaspervdj/hakyll)
+
 ## Getting started
 I organized my own workflow like this:
 
@@ -65,17 +67,18 @@ You can think there are five abstract layers:
 The users write `driver` code, and call the `interface`, which is composed of `components`, like `posts`, `tags`, `homepage` etc. But the realization of components needs a lot of tools, like `syncResource`, `parseMeta`, `getFileList` and `getMarkdowns`, which interacts with file system and processing texts, all nitty-gritty tools. The `Definitions` defines the configuration items and meta info of a post. Mostly declarations.
 
 ## Tickets
-* Enhance the DEBUG mode with single-post examplifying
-* Add more DEBUG stub code
-* fix the $LaTeX$ formulas, needs online as well :( 
+* Enhance the DEBUG mode with single-post exemplifying
+* Mathjax loading is slow since an unknown reason
 * User's tags as whitelist
-* Add Disqus plugin
-* add link to the footer ad for bbq-sg!
-* the posts have `meta`, but there are some problems in simply addding the cache layer ... First, `withMarkdownAll` should be refactored, Second, the cache layer should play well with the data retrieve requirement as well as the analysis over text.
 * Use "-" to cover the possible " " in URL, "%20" is rather dangerous
+* Cache wiki/tag as well .... But then it is a must to reinvent a dep-build tool!
+* Code highlighting
+* Clean the IO code out of repo ... first
+* Use Stack to build the system
 
 ## FUTURE
 * Wiki should be enhanced
-* 
+* Integration with PureScript
+* Make it more like a compiler structure -- learn from hakyll
 
 

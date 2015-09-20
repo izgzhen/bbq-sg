@@ -1,6 +1,11 @@
 {-# LANGUAGE DeriveGeneric #-}
 
-module BBQ.SG.Meta where
+module BBQ.SG.Meta (
+  Meta(..)
+, Email(..)
+, Contact(..)
+, Date(..)
+) where
 import Data.List (sort, group)
 import System.FilePath (FilePath)
 import BBQ.SG.Misc

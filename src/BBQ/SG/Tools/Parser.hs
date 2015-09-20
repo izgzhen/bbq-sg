@@ -1,4 +1,7 @@
-module BBQ.SG.Tools.Parser (parseMeta) where
+module BBQ.SG.Tools.Parser (
+  parseMeta
+) where
+
 import BBQ.SG.Meta
 import Data.List.Split (splitOn)
 import BBQ.SG.Misc

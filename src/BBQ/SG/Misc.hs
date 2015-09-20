@@ -8,8 +8,8 @@ import System.Posix
 import Data.List.Split (splitOn)
 import Data.List (group, sort)
 import Network.URL
-import Prelude hiding (writeFile)
-import Data.Text.Lazy.IO (writeFile)
+-- import Prelude hiding (writeFile)
+-- import Data.Text.Lazy.IO (writeFile)
 
 type EitherS = Either String -- Left is the error info
 
@@ -48,33 +48,33 @@ showMaybe (Just a) = show a
 showMaybeStr Nothing  = ""
 showMaybeStr (Just s) = s
 
-getFilesEndWith path ext = do
-    names <- getDirectoryContents path
-    return $ filter (\name -> takeExtensions name == ext) names
+-- getFilesEndWith path ext = do
+--     names <- getDirectoryContents path
+--     return $ filter (\name -> takeExtensions name == ext) names
 
-readFileMaybe path = do
-    exist <- doesFileExist path
-    if exist then do
-        text <- readFile path
-        return $ Right text
-        else return $ Left ("Reading " ++ show path ++ " failed")
+-- readFileMaybe path = do
+--     exist <- doesFileExist path
+--     if exist then do
+--         text <- readFile path
+--         return $ Right text
+--         else return $ Left ("Reading " ++ show path ++ " failed")
 
-getFileSize path = getFileStatus path >>= \s -> return $ fileSize s
+-- getFileSize path = getFileStatus path >>= \s -> return $ fileSize s
 
-getSubContents path = filter (\n -> n /= "." && n /= "..") <$> getDirectoryContents path
+-- getSubContents path = filter (\n -> n /= "." && n /= "..") <$> getDirectoryContents path
 
-filterSubContent f path = (map (path </>) <$> getSubContents path) >>= filterM f
+-- filterSubContent f path = (map (path </>) <$> getSubContents path) >>= filterM f
 
-getSubFiles = filterSubContent doesFileExist
-getSubDirs  = filterSubContent doesDirectoryExist
+-- getSubFiles = filterSubContent doesFileExist
+-- getSubDirs  = filterSubContent doesDirectoryExist
 
-getFileDict path = do
-    contents <- getSubContents path
-    let contentsDict = zip (map (path </>) contents) contents
-    dirs     <- filterM doesDirectoryExist $ map fst contentsDict
-    files    <- filterM (doesFileExist . fst) contentsDict
-    dict     <- concat <$> mapM getFileDict dirs
-    return $ dict ++ files
+-- getFileDict path = do
+--     contents <- getSubContents path
+--     let contentsDict = zip (map (path </>) contents) contents
+--     dirs     <- filterM doesDirectoryExist $ map fst contentsDict
+--     files    <- filterM (doesFileExist . fst) contentsDict
+--     dict     <- concat <$> mapM getFileDict dirs
+--     return $ dict ++ files
 
 splitOnPath = filter (/= "") . splitOn "/"
 
@@ -96,18 +96,18 @@ filterJust :: Eq x => [Maybe x] -> [x]
 filterJust = map (\(Just x) -> x) . filter (/= Nothing)
 
 -- Create all missing directories
-ioRobust path io = do
-    let segs = splitOnPath path
-    -- print $ "writeFileRobust: " ++ show segs
-    if length segs <= 1 then
-        io
-        else do
-            let segs' = take (length segs - 1) segs
-            let parentDir = concatPath segs'
-            createDirectoryIfMissing True parentDir
-            io
+-- ioRobust path io = do
+--     let segs = splitOnPath path
+--     -- print $ "writeFileRobust: " ++ show segs
+--     if length segs <= 1 then
+--         io
+--         else do
+--             let segs' = take (length segs - 1) segs
+--             let parentDir = concatPath segs'
+--             createDirectoryIfMissing True parentDir
+--             io
 
-writeFileRobust path content = ioRobust path (writeFile path content)
-copyFileRobust src dst = ioRobust dst (copyFile src dst)
+-- writeFileRobust path content = ioRobust path (writeFile path content)
+-- copyFileRobust src dst = ioRobust dst (copyFile src dst)
 
 

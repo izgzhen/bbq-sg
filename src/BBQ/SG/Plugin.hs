@@ -16,6 +16,7 @@ module BBQ.SG.Plugin (
 , scriptify
 , cssify
 , showKeyWords
+, disqusPlugin
 ) where
 
 import qualified Text.Blaze.Html5 as H
@@ -56,7 +57,8 @@ urlList list = H.ul $ do
 p :: H.ToMarkup a => a -> H.Html
 p = H.p . H.toHtml
 
-a :: (H.ToMarkup a, H.ToValue b) => a -> b -> H.Html
+-- a :: (H.ToMarkup a, H.ToValue b) => a -> b -> H.Html
+a :: String -> String -> H.Html
 a text addr = H.a ! A.href (H.toValue addr)
                   $ H.toHtml text
 
@@ -71,7 +73,7 @@ copyRight :: String -> String -> H.Html
 copyRight author year =
   H.div ! A.id "copyright" $ do
     H.p $ H.toHtml $ "Copyright Reserved, " ++ author ++ ", " ++ year
-    H.p $ "Generated with BBQ Static Generator"
+    a "Generated with BBQ Static Generator" "https://github.com/izgzhen/bbq-sg"
 
 getToday = do
   (y, m, d) <- getCurrentTime >>= return . toGregorian . utctDay
@@ -92,3 +94,25 @@ cssify path = H.link ! A.href  (H.toValue path)
 
 showKeyWords :: M.Map String Int -> H.Html
 showKeyWords keywords = H.p $ H.toHtml $ show keywords
+
+
+
+disqusPlugin :: String -> H.Html
+disqusPlugin shortname =
+    H.div ! A.id "disqus_thread" $ do
+        H.script ! A.type_ "text/javascript"
+                 $ H.toHtml ("var disqus_shortname = '" ++ shortname ++ "';" ++
+                             "(function() {" ++
+                             "       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;" ++
+                             "       dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';" ++
+                             "        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);" ++
+                             "    })();")
+
+        H.noscript $ do
+            H.toHtml ("Please enable JavaScript to view the " :: String)
+            H.a ! A.href "https://disqus.com/?ref_noscript"
+                ! A.rel "nofollow"
+                $ H.toHtml ("comments powered by Disqus" :: String)
+
+
+

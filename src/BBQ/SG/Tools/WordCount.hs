@@ -1,5 +1,8 @@
 -- Word Counter
-module BBQ.SG.Tools.WordCount where
+module BBQ.SG.Tools.WordCount (
+  selectHighest
+) where
+
 import qualified Data.Map as M
 import Data.List.Split (splitWhen)
 import Data.List (sortBy)

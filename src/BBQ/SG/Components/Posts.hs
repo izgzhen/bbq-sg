@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module BBQ.SG.Components.Posts (postGen) where
-import BBQ.SG.Tools.IO
+import BBQ.SG.Build
 import System.FilePath ((</>))
 import BBQ.SG.Tools.Synopsis
 import BBQ.SG.Template
@@ -32,6 +32,6 @@ f config headers layout (text, meta) synopsis keywords = htmlTemplate title head
                             (showMaybe $ _date meta)
                             (addTagLink config (_tags meta))
                             keywords
-                        mathjax
 
 addTagLink config tags = map (\tag -> (tag, ".." </> _tagsURL config </> toURL tag ++ ".html")) tags
+

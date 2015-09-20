@@ -1,5 +1,5 @@
 module BBQ.SG.Components.Wiki (wikiGen) where
-import BBQ.SG.Tools.IO
+import BBQ.SG.Build
 import BBQ.SG.Template
 import BBQ.SG.Plugin
 import BBQ.SG.Misc
@@ -26,48 +26,48 @@ import Text.Blaze.Html5 (toHtml)
 
     
 
-wikiGen config (layout, resources) = go (_wikiSrc config) (_wikiURL config)
-    where
-        go path url = do
-            files <- filter (\p -> takeExtensions p == ".md") <$> getSubFiles path
-            dirs  <- filter (\p -> head (dropParent p) /= '.') <$> getSubDirs path
-            -- print files
-            -- print dirs
-            let filenames = map dropParent files
-            let dirnames  = map dropParent dirs
-            let pathname  = dropParent path
+-- wikiGen config (layout, resources) = go (_wikiSrc config) (_wikiURL config)
+--     where
+--         go path url = do
+--             files <- filter (\p -> takeExtensions p == ".md") <$> getSubFiles path
+--             dirs  <- filter (\p -> head (dropParent p) /= '.') <$> getSubDirs path
+--             -- print files
+--             -- print dirs
+--             let filenames = map dropParent files
+--             let dirnames  = map dropParent dirs
+--             let pathname  = dropParent path
 
-            let commmonFiles = zip filenames (map (\p -> dropExtensions p ++ ".html") filenames)
-            let commonDirs   = zip dirnames  (map (\p -> p </> p ++ ".html") dirnames)
-            let urlList = [(pathname, pathname ++ ".html")] ++ commmonFiles ++ commonDirs
+--             let commmonFiles = zip filenames (map (\p -> dropExtensions p ++ ".html") filenames)
+--             let commonDirs   = zip dirnames  (map (\p -> p </> p ++ ".html") dirnames)
+--             let urlList = [(pathname, pathname ++ ".html")] ++ commmonFiles ++ commonDirs
 
-            -- print "render the index page"
-            if (pathname ++ ".md") `elem` filenames then
-                render pathname urlList (Just $ path </> pathname ++ ".md") (url </> pathname)
-                else render pathname urlList Nothing (url </> pathname)
+--             -- print "render the index page"
+--             if (pathname ++ ".md") `elem` filenames then
+--                 render pathname urlList (Just $ path </> pathname ++ ".md") (url </> pathname)
+--                 else render pathname urlList Nothing (url </> pathname)
 
-            -- print "render common page"
-            mapM_ (\(p, n) -> render (dropParent p) urlList (Just p) (url </> dropExtensions n)) $ zip files filenames
+--             -- print "render common page"
+--             mapM_ (\(p, n) -> render (dropParent p) urlList (Just p) (url </> dropExtensions n)) $ zip files filenames
 
-            -- print "recursively render directories"
-            mapM_ (\d -> go d (url </> dropParent d)) dirs
+--             -- print "recursively render directories"
+--             mapM_ (\d -> go d (url </> dropParent d)) dirs
 
-        render :: String -> [(String, FilePath)] -> Maybe FilePath -> FilePath -> IO ()
-        render titleExt menulist maybeMarkdown url = do
-            let title = dropExtensions titleExt
-            let headers = map (resourceToHeader config) resources
-            case maybeMarkdown of
-                Just filepath -> do
-                    eitherText <- readFileMaybe filepath
-                    case eitherText of
-                        Right text -> do
-                            let html = markdown def (pack text)
-                            let html' = layout title menulist (Just html)
-                            let html'' = htmlTemplate title headers html'
-                            renderPage url config html''
-                            return ()
-                Nothing -> do
-                    let html = layout title menulist Nothing
-                    let html' = htmlTemplate title headers html
-                    renderPage url config html'
-                    return ()
+--         render :: String -> [(String, FilePath)] -> Maybe FilePath -> FilePath -> IO ()
+--         render titleExt menulist maybeMarkdown url = do
+--             let title = dropExtensions titleExt
+--             let headers = map (resourceToHeader config) resources
+--             case maybeMarkdown of
+--                 Just filepath -> do
+--                     eitherText <- readFileMaybe filepath
+--                     case eitherText of
+--                         Right text -> do
+--                             let html = markdown def (pack text)
+--                             let html' = layout title menulist (Just html)
+--                             let html'' = htmlTemplate title headers html'
+--                             renderPage url config html''
+--                             return ()
+--                 Nothing -> do
+--                     let html = layout title menulist Nothing
+--                     let html' = htmlTemplate title headers html
+--                     renderPage url config html'
+--                     return ()

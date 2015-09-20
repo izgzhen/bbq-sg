@@ -34,7 +34,8 @@ data Config = Config_ {
     _modCache    :: FilePath,
     _analyticsId :: String,
 
-    _devmode     :: DevMode
+    _devmode     :: DevMode,
+    _otherdeps   :: [FilePath]
 }
 
 _postsSta config  = _staticDir config </> _postsURL config

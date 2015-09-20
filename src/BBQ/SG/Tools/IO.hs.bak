@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module BBQ.SG.Tools.IO (
   prepareFolders   
 , renderAllPosts
@@ -5,6 +6,7 @@ module BBQ.SG.Tools.IO (
 , syncImages
 , syncJs
 , syncCss
+, resolveDeps
 ) where
 
 import BBQ.SG.Misc
@@ -12,7 +14,6 @@ import Data.Set (fromList, intersection, difference, toList)
 import BBQ.SG.Config
 import BBQ.SG.Meta
 import BBQ.SG.Tools.Parser
-import BBQ.SG.Tools.ModCache
 import BBQ.SG.Tools.AutoKeywords
 import BBQ.SG.Tools.Synopsis
 import Text.Blaze.Html.Renderer.Text
@@ -26,22 +27,7 @@ import Prelude hiding (writeFile)
 import qualified Data.Map as M
 import Data.Text.Lazy.IO (writeFile)
 
-prepareFolders config = do mapM_ (createDirectoryIfMissing True)
-                            $ map (\f -> f config)
-                                  [ _postsSta
-                                  , _pageSta
-                                  , _imgSta
-                                  , _jsSta
-                                  , _cssSta
-                                  , _tagsSta
-                                  ]
-
-
-
-renderAllPosts :: Config -> CacheMap Meta -> ((Text, Meta) -> Synopsis -> [(FilePath, Int)] -> Html) -> IO ([Meta], CacheMap Meta)
 renderAllPosts config cache processor = do
-    putStrLn "Generating posts..."
-
     filenames <- map dropExtensions <$> getFilesEndWith (_postsSrc config) ".md"
 
     (filenames', cache') <- foldM (\(modfiles, cache) file -> do
@@ -143,5 +129,24 @@ syncResource srcDir staDir srcRoot staRoot cache = do
               ) cache common
 
 
+
+resolveDeps config = do
+    let paths = _otherdeps config
+    maybeCache <- loadCache (_modCache config)
+    case maybeCache of
+        Nothing -> error "Loading cache failed"
+        Just (cache :: CacheMap Meta) -> do
+            (ret, cache') <- foldM  (\(rets, cache) path -> do
+                                        modTime <- getModTime path
+                                        if isNewEntry path modTime cache then do
+                                            putStrLn $ "Flushing cache since " ++ show (path, modTime)
+                                            return (False : rets, updateEntry path modTime emptyMeta cache)
+                                            else return (True : rets, cache))
+                                    ([], cache)
+                                    paths
+
+            when (not $ all id ret) $ do
+                writeFile (_modCache config) (pack "")
+                
 
 

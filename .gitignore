@@ -2,3 +2,4 @@ test
 *.hi
 *.o
 dist
+.stack-work

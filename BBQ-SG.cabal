@@ -1,5 +1,5 @@
 name:                bbq-sg
-version:             0.4.0
+version:             0.4.1
 license:             MIT
 author:              Zhen Zhang
 maintainer:          izgzhen@gmail.com
@@ -21,8 +21,6 @@ library
                        BBQ.SG.Components.Tags,
                        BBQ.SG.Components.Wiki,
                        BBQ.SG.Tools.AutoKeywords,
-                       BBQ.SG.Tools.IO,
-                       BBQ.SG.Tools.ModCache,
                        BBQ.SG.Tools.Parser,
                        BBQ.SG.Tools.Synopsis,
                        BBQ.SG.Tools.WordCount
