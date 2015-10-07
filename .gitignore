@@ -1,5 +1,4 @@
-test
-*.hi
-*.o
-dist
 .stack-work
+dist
+*~
+.DS_Store
