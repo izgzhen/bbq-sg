@@ -1,4 +1,4 @@
-module Config where
+module BBQ.Config where
 
 import Language.Haskell.TH
 import System.FilePath
@@ -18,8 +18,8 @@ data BuildConfig = BuildConfig {
 
 defaultBuildConfig = BuildConfig {
     targetDir  = "build",
-    hsSrcDir   = "Core", -- XXX: overlapping with .cabal file
-    hsOther    = ["Build.hs"],
+    hsSrcDir   = "src", -- XXX: overlapping with .cabal file
+    hsOther    = [],
     mdSrcDir   = "markdowns",
     siteConfig = defSiteConfig
 }
@@ -30,6 +30,6 @@ data SiteConfig = SiteConfig {
 }
 
 defSiteConfig = SiteConfig {
-    host   = "http://localhost:3000",
+    host   = "http://localhost",
     author = "yourname"
 }

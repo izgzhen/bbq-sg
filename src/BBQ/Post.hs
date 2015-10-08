@@ -1,10 +1,8 @@
-module Post (
-  PostMeta
-, PostSummary
-, PostExtra
+module BBQ.Post (
+  postTask
 ) where
 
-import Import
+import BBQ.Import
 
 import Data.Time (UTCTime)
 import Data.Maybe
@@ -14,7 +12,7 @@ import Data.List.Split
 import Data.List
 import Text.Blaze.Html.Renderer.Text (renderHtml)
 import Language.Haskell.TH
-import Task
+import BBQ.Task
 import qualified Data.HashMap.Lazy as HM
 import Text.Pandoc
 import Data.Time.ISO8601
@@ -42,7 +40,7 @@ url pm = let (PostId _ link) = pid pm in link
 
 postTask = Task extract' summarize' render' relate' initialSummary'
     where
-        extract' = ReadTask "markdowns/*.md" f
+        extract' = ReadTask f
             where
                 f :: Text -> Text -> Text -> PostMeta
                 f text gitDate path =
@@ -69,7 +67,7 @@ postTask = Task extract' summarize' render' relate' initialSummary'
                     tDir <- targetDir <$> askBuild
                     let html = $(hamletFile $(templDirQ "post.hamlet")) ()
                     let URL link = url pm
-                    return (tDir </> T.unpack link , renderHtml html)
+                    return (tDir </> T.unpack link ++ ".html", renderHtml html)
 
         -- reduce
         summarize' ps pm = ps { categories = foldl f (categories ps) (tags pm) }

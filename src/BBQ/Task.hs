@@ -1,12 +1,13 @@
-module Task where
+module BBQ.Task where
 
 import Control.Monad.Reader
-import Import
+import BBQ.Import
 import Development.Shake hiding (readFile', writeFile')
-import IO
+import BBQ.IO
 import qualified Data.Text.Lazy as T
+import Development.Shake.FilePath
 
-data ReadTask  x = ReadTask  String (Text -> Text -> Text -> x)
+data ReadTask  x = ReadTask  (Text -> Text -> Text -> x)
 data WriteTask x = WriteTask (Text -> x -> Build (FilePath, Text))
 
 type Markdown = Text
@@ -14,18 +15,19 @@ newtype URL = URL Text
 
 type Build = Reader BuildConfig
 
-runReadTask :: ReadTask x -> Action [x]
-runReadTask (ReadTask src extract) = do
-        need [src]
-        markdowns <- getDirectoryFiles "" [src]
-        texts <- mapM readFile' markdowns
-        dates <- mapM (\p -> do
-                        let gitCmd = "git log -1 --format=%ci --" :: String
-                        Stdout gitDate <- cmd gitCmd [p]
-                        return (T.pack gitDate))
-                      markdowns
-        let metas = map (\(x, y, z) -> extract x y z) (zip3 texts dates $ map T.pack markdowns)
-        return metas
+runReadTask :: String -> ReadTask x -> Action [x]
+runReadTask out (ReadTask extract) = do
+    let src = dropExtension (dropDirectory1 out) ++ ".md"
+    need [src]
+    markdowns <- getDirectoryFiles "" [src]
+    texts <- mapM readFile' markdowns
+    dates <- mapM (\p -> do
+                    let gitCmd = "git log -1 --format=%ci --" :: String
+                    Stdout gitDate <- cmd gitCmd [p]
+                    return (T.pack gitDate))
+                  markdowns
+    let metas = map (\(x, y, z) -> extract x y z) (zip3 texts dates $ map T.pack markdowns)
+    return metas
 
 runWriteTask :: BuildConfig -> [(meta, extra)] -> WriteTask (meta, extra) -> Action ()
 runWriteTask config pairs (WriteTask builder) = do
@@ -43,9 +45,9 @@ data Task meta summary extra = Task {
     initialSummary :: summary
 }
 
-runTask :: Task m s e -> BuildConfig -> Action ()
-runTask (Task rt s wt r is) config = do
-    metas <- runReadTask rt
+runTask :: FilePath -> Task m s e -> BuildConfig -> Action ()
+runTask fp (Task rt s wt r is) config = do
+    metas <- runReadTask fp rt
     let sm = foldl s is metas
     let extras = map (r sm) metas
     runWriteTask config (zip metas extras) wt

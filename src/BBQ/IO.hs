@@ -1,4 +1,4 @@
-module IO where
+module BBQ.IO where
 
 
 import Data.Text.Lazy

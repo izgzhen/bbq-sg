@@ -12,7 +12,12 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Config, Import, IO, Post, Task
+  exposed-modules:     BBQ.Config,
+                       BBQ.Import,
+                       BBQ.IO,
+                       BBQ.Post,
+                       BBQ.Task
+                       BBQ.Main
   -- other-modules:       
   default-extensions:  TemplateHaskell,
                        QuasiQuotes,
