@@ -1,6 +1,7 @@
 $doctype 5
 <html>
     <head>
-        <title>Hamlet is Awesome
+        <title>#{title}
     <body>
-        <p>All done.
+        <p>My URL: #{link}
+        <p>My date: #{show date}

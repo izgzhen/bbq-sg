@@ -3,8 +3,12 @@ module BBQ.Config where
 import Language.Haskell.TH
 import System.FilePath
 
+
+defaultTemplateDir :: String
+defaultTemplateDir = "templates"
+
 templDirQ :: String -> Q Exp
-templDirQ s = [| "templates" </> s |]
+templDirQ s = [| defaultTemplateDir </> s |]
 
 
 -- Don't export the constructor, use record syntax instead

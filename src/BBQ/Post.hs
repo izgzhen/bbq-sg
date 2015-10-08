@@ -64,9 +64,9 @@ postTask = Task extract' summarize' render' relate' initialSummary'
         render' = WriteTask f
             where
                 f hamlet (pm@PostMeta{..}, pe@PostExtra{..}) = do
+                    let PostId title (URL link) = pid
                     tDir <- targetDir <$> askBuild
                     let html = $(hamletFile $(templDirQ "post.hamlet")) ()
-                    let URL link = url pm
                     return (tDir </> T.unpack link ++ ".html", renderHtml html)
 
         -- reduce
