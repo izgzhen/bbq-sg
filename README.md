@@ -25,3 +25,4 @@ Since this refactoring focuses on better code, better safety and better performa
 
 ### Note
 For the `FilePath`, URL etc., keep use the `String` Type. And try to move to the non-String type for content as long as possible
+

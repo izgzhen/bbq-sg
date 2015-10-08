@@ -11,9 +11,10 @@ module BBQ.Import (
 , module Development.Shake
 , module Development.Shake.FilePath
 , module Control.Monad.Except
+, module BBQ.Route
 ) where
 
-
+import BBQ.Route
 import BBQ.Config
 import Text.Hamlet
 import Data.HashMap.Lazy (HashMap)
@@ -38,5 +39,9 @@ eitherToMaybe e = case e of
     Right x -> Just x
 
 
-readFile'  fp   = pack <$> S.readFile' fp
-writeFile' fp t = S.writeFile' (unpack t) fp
+readFile'  fp   = do
+    putNormal $ "[DEBUG] reading " ++ fp
+    pack <$> S.readFile' fp
+
+writeFile' fp t = S.writeFile' fp (unpack t)
+

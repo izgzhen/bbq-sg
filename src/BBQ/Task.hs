@@ -5,8 +5,6 @@ import BBQ.Import
 data ReadTask  x = ReadTask  (Text -> Text -> FilePath -> Build x)
 data WriteTask x = WriteTask (Text -> x -> Build (FilePath, Text)) [FilePath]
 
-newtype URL = URL FilePath
-
 type Build = ReaderT BuildConfig (Except Text)
 runBuild b config = let Identity ret = runExceptT $ runReaderT b config in ret
 
@@ -28,7 +26,7 @@ runWriteTask config pairs (WriteTask builder deps) = do
     let outputs = map (\b -> runBuild b config) builds
     need deps
     forM_ outputs $ \eResult -> case eResult of
-        Left errMsg      -> error_ errMsg
+        Left errMsg      -> error_ $ "ERROR in write task: " ++ errMsg
         Right (fp, text) -> writeFile' fp text
 
 data Task meta summary extra = Task {
@@ -43,7 +41,7 @@ runTask :: FilePath -> Task m s e -> BuildConfig -> Action ()
 runTask fp (Task rt s wt r is) config = do
     metas <- runReadTask config fp rt
     case runBuild (b metas) config of
-        Left errMsg -> error_ errMsg
+        Left errMsg -> error_ $ "ERROR in runTask: " ++ errMsg
         Right pairs -> runWriteTask config pairs wt
     where
         b metas' = do
@@ -51,9 +49,5 @@ runTask fp (Task rt s wt r is) config = do
             sm <- foldM s is metas
             extras <- sequence $ map (r sm) metas
             return $ zip metas extras
-
-
-askBuild :: Build BuildConfig
-askBuild = ask
 
 

@@ -11,10 +11,10 @@ main =
     in shakeArgs shakeOptions { shakeFiles = targetDir } $ do
         let buildAt = (</>) targetDir
         phony "clean" $ removeFilesAfter targetDir ["//*"]
-        buildAt "markdowns/*.html" %> \out -> do
+        buildAt (mdSrcDir </> "*.html") %> \out -> do
             hs <- getDirectoryFiles "" [ hsSrcDir </> "/*.hs" ]
             need hs
             runTask out task config
-        want [buildAt "markdowns" </> "2014-04-24-example.html"]
+        want [buildAt mdSrcDir </> "2014-04-24-example.html"]
 
 

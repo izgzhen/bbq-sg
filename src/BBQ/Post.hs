@@ -16,6 +16,7 @@ import qualified Data.Text.Lazy as TL
 
 data PostMeta = PostMeta {
   pid     :: PostId
+, title   :: Text
 , date    :: UTCTime
 , body    :: Pandoc
 , tags    :: [Text]
@@ -29,11 +30,6 @@ data PostSummary = PostSummary {
   categories :: HashMap Text [PostId] -- Tag -> Posts
 }
 
-data PostId = PostId Text URL
-
-url :: PostMeta -> URL
-url pm = let (PostId _ link) = pid pm in link
-
 postTask = Task extract' summarize' render' relate' initialSummary'
     where
         extract' = ReadTask f
@@ -43,10 +39,10 @@ postTask = Task extract' summarize' render' relate' initialSummary'
                     let ret = do
                           pandoc@(Pandoc meta _) <- eitherToMaybe $ readMarkdown def (unpack text)
                           let title = pandocMetaToTitle meta
-                          cDate <- parseCreatedDate . takeFileName $ dropExtension path
+                          let name  = takeFileName $ dropExtension path
+                          cDate <- parseCreatedDate name
                           mDate <- parseModifiedDate gitDate cDate
-                          let url = URL $ dropExtension path
-                          return $ PostMeta (PostId title url) mDate pandoc []
+                          return $ PostMeta (PostId $ pack name) title mDate pandoc []
                     case ret of
                         Nothing -> throwError "parsing failed"
                         Just pm -> return pm
@@ -67,10 +63,10 @@ postTask = Task extract' summarize' render' relate' initialSummary'
         render' = WriteTask f deps
             where
                 f hamlet (pm@PostMeta{..}, pe@PostExtra{..}) = do
-                    let PostId title (URL link) = pid
-                    tDir <- targetDir <$> askBuild
+                    link <- absolutePath $ Post pid
+                    path <- filePath $ Post pid
                     let html = $(hamletFile $(templDirQ "post.hamlet")) ()
-                    return (tDir </> link ++ ".html", TL.toStrict $ renderHtml html)
+                    return (path, TL.toStrict $ renderHtml html)
                 deps = [$(templDirQ "post.hamlet")]
 
         -- reduce
