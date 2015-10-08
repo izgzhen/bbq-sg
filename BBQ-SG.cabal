@@ -14,7 +14,6 @@ cabal-version:       >=1.10
 library
   exposed-modules:     BBQ.Config,
                        BBQ.Import,
-                       BBQ.IO,
                        BBQ.Post,
                        BBQ.Task
                        BBQ.Main
@@ -25,7 +24,8 @@ library
                        RecordWildCards,
                        NoImplicitPrelude,
                        EmptyDataDecls,
-                       GADTs
+                       GADTs,
+                       FlexibleContexts
 
   build-depends:       base >=4.8 && <4.9,
                        template-haskell >=2.10 && <2.11,

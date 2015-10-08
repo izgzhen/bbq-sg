@@ -1,11 +1,8 @@
 module BBQ.Main where
 
 import BBQ.Import
-import BBQ.Config
 import BBQ.Task
 import BBQ.Post
-import Development.Shake
-import Development.Shake.FilePath
 
 main :: IO ()
 main =
@@ -18,10 +15,6 @@ main =
             hs <- getDirectoryFiles "" [ hsSrcDir </> "/*.hs" ]
             need hs
             runTask out task config
-        -- buildAt "markdowns/*.html" %> \out -> do
-        --     let src = dropExtension (dropDirectory1 out) ++ ".md"
-        --     need [src]
-        --     copyFile' src out
         want [buildAt "markdowns" </> "2014-04-24-example.html"]
 
 

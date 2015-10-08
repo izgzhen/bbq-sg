@@ -5,7 +5,6 @@ module BBQ.Post (
 import BBQ.Import
 
 import Data.Time (UTCTime)
-import System.FilePath
 import Data.List.Split
 import Text.Blaze.Html.Renderer.Text (renderHtml)
 import Language.Haskell.TH
@@ -39,24 +38,31 @@ postTask = Task extract' summarize' render' relate' initialSummary'
     where
         extract' = ReadTask f
             where
-                f :: Text -> Text -> Text -> PostMeta
-                f text gitDate path =
-                    let
-                        Right pandoc@(Pandoc meta _) = readMarkdown def (unpack text)
-                        title = writeAsciiDoc def (Pandoc nullMeta [Plain (docTitle meta)])
-                        Just cDate = parseISO8601
-                                   . (++"T00:00:00Z") -- Append time
-                                   . intercalate "-" . take 3 . splitOn "-" -- Filename starts with 'year-month-day'
-                                   . takeFileName . dropExtension
-                                   $ unpack path
-                        Just mDate = case lines (unpack gitDate) of
-                                          [] -> return cDate -- If not checked in yet
-                                          (x:_) -> parseISO8601
-                                                . (\[d,t,z] -> d ++ "T" ++ t ++ z) . words -- Convert to proper ISO8601 date
-                                                $ x
-                        url = URL $ pack (dropExtension (unpack path))
+                f :: Text -> Text -> FilePath -> Build PostMeta
+                f text gitDate path = do
+                    let ret = do
+                          pandoc@(Pandoc meta _) <- eitherToMaybe $ readMarkdown def (unpack text)
+                          let title = pandocMetaToTitle meta
+                          cDate <- parseCreatedDate . takeFileName $ dropExtension path
+                          mDate <- parseModifiedDate gitDate cDate
+                          let url = URL $ dropExtension path
+                          return $ PostMeta (PostId title url) mDate pandoc []
+                    case ret of
+                        Nothing -> throwError "parsing failed"
+                        Just pm -> return pm
 
-                    in PostMeta (PostId (pack title) url) mDate pandoc []
+                parseCreatedDate x = parseISO8601 . (++"T00:00:00Z") -- Append time
+                                                  . intercalate "-" . take 3 $ splitOn "-" x
+                                                 -- Filename starts with 'year-month-day'
+                parseModifiedDate gitDate cDate =
+                    case lines (unpack gitDate) of
+                       []    -> return cDate -- If not checked in yet
+                       (x:_) -> parseISO8601
+                                . (\[d,t,z] -> d ++ "T" ++ t ++ z)
+                                $ words x
+                             -- Convert to proper ISO8601 date
+
+                pandocMetaToTitle meta = pack $ writeAsciiDoc def (Pandoc nullMeta [Plain (docTitle meta)])
 
         render' = WriteTask f deps
             where
@@ -64,11 +70,11 @@ postTask = Task extract' summarize' render' relate' initialSummary'
                     let PostId title (URL link) = pid
                     tDir <- targetDir <$> askBuild
                     let html = $(hamletFile $(templDirQ "post.hamlet")) ()
-                    return (tDir </> unpack link ++ ".html", TL.toStrict $ renderHtml html)
+                    return (tDir </> link ++ ".html", TL.toStrict $ renderHtml html)
                 deps = [$(templDirQ "post.hamlet")]
 
         -- reduce
-        summarize' ps pm = ps { categories = foldl' f (categories ps) (tags pm) }
+        summarize' ps pm = return $ ps { categories = foldl' f (categories ps) (tags pm) }
             where
                 f :: HashMap Text [PostId] -> Text -> HashMap Text [PostId]
                 f m tag = case HM.lookup tag m of
@@ -76,10 +82,12 @@ postTask = Task extract' summarize' render' relate' initialSummary'
                             Just pids -> HM.insert tag (pid pm:pids) m
 
         -- map
-        relate' ps pm = PostExtra { related = pids }
+        relate' ps pm = return $ PostExtra { related = pids }
             where
                 m = categories ps
                 pids = concat $ catMaybes $ map (\tag -> HM.lookup tag m) (tags pm)
 
         initialSummary' = PostSummary { categories = HM.empty }
+
+
 
