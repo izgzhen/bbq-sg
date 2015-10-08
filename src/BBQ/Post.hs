@@ -5,18 +5,15 @@ module BBQ.Post (
 import BBQ.Import
 
 import Data.Time (UTCTime)
-import Data.Maybe
-import Control.Monad.Reader
 import System.FilePath
 import Data.List.Split
-import Data.List
 import Text.Blaze.Html.Renderer.Text (renderHtml)
 import Language.Haskell.TH
 import BBQ.Task
 import qualified Data.HashMap.Lazy as HM
 import Text.Pandoc
 import Data.Time.ISO8601
-import qualified Data.Text.Lazy as T
+import qualified Data.Text.Lazy as TL
 
 data PostMeta = PostMeta {
   pid     :: PostId
@@ -45,32 +42,33 @@ postTask = Task extract' summarize' render' relate' initialSummary'
                 f :: Text -> Text -> Text -> PostMeta
                 f text gitDate path =
                     let
-                        Right pandoc@(Pandoc meta _) = readMarkdown def (T.unpack text)
+                        Right pandoc@(Pandoc meta _) = readMarkdown def (unpack text)
                         title = writeAsciiDoc def (Pandoc nullMeta [Plain (docTitle meta)])
                         Just cDate = parseISO8601
                                    . (++"T00:00:00Z") -- Append time
                                    . intercalate "-" . take 3 . splitOn "-" -- Filename starts with 'year-month-day'
                                    . takeFileName . dropExtension
-                                   $ T.unpack path
-                        Just mDate = case lines (T.unpack gitDate) of
+                                   $ unpack path
+                        Just mDate = case lines (unpack gitDate) of
                                           [] -> return cDate -- If not checked in yet
                                           (x:_) -> parseISO8601
                                                 . (\[d,t,z] -> d ++ "T" ++ t ++ z) . words -- Convert to proper ISO8601 date
                                                 $ x
-                        url = URL $ T.pack (dropExtension (T.unpack path))
+                        url = URL $ pack (dropExtension (unpack path))
 
-                    in PostMeta (PostId (T.pack title) url) mDate pandoc []
+                    in PostMeta (PostId (pack title) url) mDate pandoc []
 
-        render' = WriteTask f
+        render' = WriteTask f deps
             where
                 f hamlet (pm@PostMeta{..}, pe@PostExtra{..}) = do
                     let PostId title (URL link) = pid
                     tDir <- targetDir <$> askBuild
                     let html = $(hamletFile $(templDirQ "post.hamlet")) ()
-                    return (tDir </> T.unpack link ++ ".html", renderHtml html)
+                    return (tDir </> unpack link ++ ".html", TL.toStrict $ renderHtml html)
+                deps = [$(templDirQ "post.hamlet")]
 
         -- reduce
-        summarize' ps pm = ps { categories = foldl f (categories ps) (tags pm) }
+        summarize' ps pm = ps { categories = foldl' f (categories ps) (tags pm) }
             where
                 f :: HashMap Text [PostId] -> Text -> HashMap Text [PostId]
                 f m tag = case HM.lookup tag m of

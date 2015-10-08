@@ -1,7 +1,6 @@
 module BBQ.IO where
 
-
-import Data.Text.Lazy
+import ClassyPrelude
 import Development.Shake as S
 
 

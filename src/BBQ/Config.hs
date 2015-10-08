@@ -2,7 +2,7 @@ module BBQ.Config where
 
 import Language.Haskell.TH
 import System.FilePath
-
+import Prelude (String)
 
 defaultTemplateDir :: String
 defaultTemplateDir = "templates"

@@ -15,11 +15,8 @@ main =
         let buildAt = (</>) targetDir
         phony "clean" $ removeFilesAfter targetDir ["//*"]
         buildAt "markdowns/*.html" %> \out -> do
-            hs   <- getDirectoryFiles "" [ hsSrcDir </> "/*.hs" ]
-            tems <- getDirectoryFiles "" [ defaultTemplateDir </> "/*.hamlet"
-                                         , defaultTemplateDir </> "/*.lucius"
-                                         , defaultTemplateDir </> "/*.julius" ]
-            need $ hs ++ tems
+            hs <- getDirectoryFiles "" [ hsSrcDir </> "/*.hs" ]
+            need hs
             runTask out task config
         -- buildAt "markdowns/*.html" %> \out -> do
         --     let src = dropExtension (dropDirectory1 out) ++ ".md"
