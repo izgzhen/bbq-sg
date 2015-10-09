@@ -2,7 +2,7 @@
 -- see http://haskell.org/cabal/users-guide/
 
 name:                bbq-sg
-version:             0.5.0
+version:             0.5.1
 license:             MIT
 license-file:        LICENSE
 author:              Zhen Zhang
@@ -14,11 +14,12 @@ cabal-version:       >=1.10
 library
   exposed-modules:     BBQ.Config,
                        BBQ.Import,
-                       BBQ.Post,
                        BBQ.Task,
                        BBQ.Main,
                        BBQ.Route,
-                       BBQ.Index
+                       BBQ.Component.Post,
+                       BBQ.Component.Index,
+                       BBQ.Component.Wiki
   -- other-modules:       
   default-extensions:  TemplateHaskell,
                        QuasiQuotes,

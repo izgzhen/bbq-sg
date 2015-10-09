@@ -2,8 +2,8 @@ module BBQ.Main where
 
 import BBQ.Import
 import BBQ.Task
-import BBQ.Post
-import BBQ.Index
+import BBQ.Component.Post
+import BBQ.Component.Index
 import qualified Data.HashMap.Lazy as HM
 
 hsDeps :: FilePath -> Action ()

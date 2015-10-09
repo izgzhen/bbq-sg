@@ -1,16 +1,40 @@
 module BBQ.Task where
 
 import BBQ.Import
+import qualified Data.HashMap.Lazy as HM
+
 
 data ReadTask  x = ReadTask  (Text -> Text -> FilePath -> Build x)
 data WriteTask x = WriteTask (x -> Build (FilePath, Text)) [FilePath]
 
-type Widget  = HtmlUrl WebPath
-type Widgets = HashMap Text Widget
-
 type Build = ReaderT BuildConfig (Except Text)
 runBuild b config = let Identity ret = runExceptT $ runReaderT b config in ret
 
+data Task meta summary extra widget = Task {
+    extract     :: ReadTask meta,
+    summarize   :: summary -> meta -> Build summary,
+    render      :: WriteTask (meta, extra),
+    relate      :: summary -> meta -> Build extra,
+    buildWidget :: Maybe (summary -> (Text, widget)),
+    initialSummary :: summary
+}
+
+-------------------------- / Runner / -------------------------------------
+
+runRecursiveTask :: BuildConfig -> Task m s e w ->
+                    WriteTask (HashMap Text w) ->
+                    ([FilePath] -> Maybe (Text, w)) ->
+                    FilePath -> 
+                    Action ()
+runRecursiveTask config task collectTask mkDirWidget rootDir = run rootDir
+    where
+        run dir = do
+            mdFiles <- getDirectoryFiles dir [ "*.md" ]
+            subDirs <- getDirectoryDirs dir
+            mWidget <- runTask mdFiles task config
+            let mDirWidget = mkDirWidget subDirs
+            runCollectTask config (HM.fromList $ catMaybes [mWidget, mDirWidget]) collectTask
+            mapM_ run subDirs
 
 runReadTask :: BuildConfig -> [FilePath] -> ReadTask x -> Action (Build [x])
 runReadTask config markdowns (ReadTask extract) = do
@@ -30,23 +54,14 @@ runWriteTask config xs (WriteTask builder deps) = do
         Left errMsg      -> error_ $ "ERROR in write task: " ++ errMsg
         Right (fp, text) -> writeFile' fp text
 
-runCollectTask :: BuildConfig -> HashMap Text x -> WriteTask (HashMap Text x) -> Action ()
+runCollectTask :: BuildConfig -> HashMap Text widget -> WriteTask (HashMap Text widget) -> Action ()
 runCollectTask config hm (WriteTask builder deps) = do
     need deps
     case runBuild (builder hm) config of
         Left errMsg      -> error_ $ "ERROR in collect task: " ++ errMsg
         Right (fp, text) -> writeFile' fp text
 
-data Task meta summary extra = Task {
-    extract     :: ReadTask meta,
-    summarize   :: summary -> meta -> Build summary,
-    render      :: WriteTask (meta, extra),
-    relate      :: summary -> meta -> Build extra,
-    buildWidget :: Maybe (summary -> (Text, Widget)),
-    initialSummary :: summary
-}
-
-runTask :: [FilePath] -> Task m s e -> BuildConfig -> Action (Maybe (Text, Widget))
+runTask :: [FilePath] -> Task m s e w -> BuildConfig -> Action (Maybe (Text, w))
 runTask src (Task rt s wt r bw is) config = do
     metas <- runReadTask config src rt
     case runBuild (b metas) config of

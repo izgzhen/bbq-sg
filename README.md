@@ -19,8 +19,8 @@ Since this refactoring focuses on better code, better safety and better performa
 
 
 ### TODOs
-* Process Staging & JSON format widget
-* Try it in production
+* Try Wiki
+* 
 
 
 ### Note

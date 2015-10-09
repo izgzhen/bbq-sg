@@ -9,6 +9,10 @@ module BBQ.Import (
 , writeFile'
 , eitherToMaybe
 , renderHtml
+, Widget
+, Widgets
+, module Data.List.Split
+, module Text.Pandoc
 , module Development.Shake
 , module Development.Shake.FilePath
 , module Control.Monad.Except
@@ -27,6 +31,8 @@ import Development.Shake.FilePath
 import qualified Development.Shake as S
 import qualified Development.Shake.FilePath as SFP
 import qualified Data.Text.Lazy as TL
+import Text.Pandoc (Pandoc)
+import Data.List.Split (splitOn)
 
 getGitDate p = do
     let gitCmd = "git log -1 --format=%ci --" :: String
@@ -49,3 +55,6 @@ writeFile' fp t = S.writeFile' fp (unpack t)
 
 
 renderHtml = TL.toStrict . BLZ.renderHtml
+
+type Widget  = HtmlUrl WebPath
+type Widgets = HashMap Text Widget

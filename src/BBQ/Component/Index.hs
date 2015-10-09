@@ -1,13 +1,4 @@
-{-
-    The Post.hs is specifying things happening in the stage0 and stage1. But Index.sh will only happen in
-    stage1, and it has some requirements over the information it hopes for.
--}
-
-{-
-    Maybe a light weight enhancement like the whamlet would be necessary
--}
-
-module BBQ.Index where
+module BBQ.Component.Index where
 
 import BBQ.Import
 import qualified Data.HashMap.Lazy as HM

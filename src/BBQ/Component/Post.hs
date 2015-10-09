@@ -1,16 +1,14 @@
-module BBQ.Post (
+module BBQ.Component.Post (
   postTask
 ) where
 
 import BBQ.Import
 
 import Data.Time (UTCTime)
-import Data.List.Split
 import Language.Haskell.TH
 import BBQ.Task
 import qualified Data.HashMap.Lazy as HM
-import Text.Pandoc
-import Data.Time.ISO8601
+import BBQ.Component.Common
 
 data PostMeta = PostMeta {
   pid     :: PostId
@@ -32,31 +30,9 @@ postTask = Task extract' summarize' render' relate' (Just buildWidget') initialS
     where
         extract' = ReadTask f
             where
-                f :: Text -> Text -> FilePath -> Build PostMeta
-                f text gitDate path = do
-                    let ret = do
-                          pandoc@(Pandoc meta _) <- eitherToMaybe $ readMarkdown def (unpack text)
-                          let title = pandocMetaToTitle meta
-                          let name  = takeFileName $ dropExtension path
-                          cDate <- parseCreatedDate name
-                          mDate <- parseModifiedDate gitDate cDate
-                          return $ PostMeta (PostId $ pack name) title mDate pandoc []
-                    case ret of
-                        Nothing -> throwError "parsing failed"
-                        Just pm -> return pm
-
-                parseCreatedDate x = parseISO8601 . (++"T00:00:00Z") -- Append time
-                                                  . intercalate "-" . take 3 $ splitOn "-" x
-                                                 -- Filename starts with 'year-month-day'
-                parseModifiedDate gitDate cDate =
-                    case lines (unpack gitDate) of
-                       []    -> return cDate -- If not checked in yet
-                       (x:_) -> parseISO8601
-                                . (\[d,t,z] -> d ++ "T" ++ t ++ z)
-                                $ words x
-                             -- Convert to proper ISO8601 date
-
-                pandocMetaToTitle meta = pack $ writeAsciiDoc def (Pandoc nullMeta [Plain (docTitle meta)])
+              f text gitDate path = do
+                (name, title, cDate, mDate, pandoc) <- markDownExtract text gitDate path
+                return $ PostMeta (PostId $ pack name) title mDate pandoc []
 
         render' = WriteTask f deps
             where

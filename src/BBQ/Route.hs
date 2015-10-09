@@ -11,8 +11,12 @@ import Text.Blaze.Html (toHtml)
 newtype PostId = PostId { unPostId :: Text }
     deriving (PathInfo)
 
+newtype WikiId = WikiId { unWikiId :: Text }
+    deriving (PathInfo)
+
 data WebPath = Index
              | Post PostId
+             | Wiki WikiId
              deriving (Typeable)
 
 $(derivePathInfo ''WebPath)
