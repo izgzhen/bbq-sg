@@ -6,13 +6,11 @@ import BBQ.Import
 
 import Data.Time (UTCTime)
 import Data.List.Split
-import Text.Blaze.Html.Renderer.Text (renderHtml)
 import Language.Haskell.TH
 import BBQ.Task
 import qualified Data.HashMap.Lazy as HM
 import Text.Pandoc
 import Data.Time.ISO8601
-import qualified Data.Text.Lazy as TL
 
 data PostMeta = PostMeta {
   pid     :: PostId
@@ -30,7 +28,7 @@ data PostSummary = PostSummary {
   categories :: HashMap Text [PostId] -- Tag -> Posts
 }
 
-postTask = Task extract' summarize' render' relate' initialSummary'
+postTask = Task extract' summarize' render' relate' (Just buildWidget') initialSummary'
     where
         extract' = ReadTask f
             where
@@ -62,11 +60,11 @@ postTask = Task extract' summarize' render' relate' initialSummary'
 
         render' = WriteTask f deps
             where
-                f hamlet (pm@PostMeta{..}, pe@PostExtra{..}) = do
+                f (pm@PostMeta{..}, pe@PostExtra{..}) = do
                     link <- absolutePath $ Post pid
                     path <- filePath $ Post pid
                     let html = $(hamletFile $(templDirQ "post.hamlet")) ()
-                    return (path, TL.toStrict $ renderHtml html)
+                    return (path, renderHtml html)
                 deps = [$(templDirQ "post.hamlet")]
 
         -- reduce
@@ -85,5 +83,8 @@ postTask = Task extract' summarize' render' relate' initialSummary'
 
         initialSummary' = PostSummary { categories = HM.empty }
 
-
+        buildWidget' ps@PostSummary{..} = (,) "postsList"
+                                          $ [hamlet|
+                                              <p> Sorry, not developed yet :(
+                                            |]
 

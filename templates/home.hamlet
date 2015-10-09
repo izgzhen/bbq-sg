@@ -1,0 +1,5 @@
+<h2> Home
+<p>
+    $maybe postsWidget <- mPosts
+        ^{postsWidget}
+

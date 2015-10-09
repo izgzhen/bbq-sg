@@ -12,14 +12,14 @@ Status: Under refactoring
 * Try to use type-safe routes
 * Re-export some String based libraries with Text
 * Use `Vector` and `HashMap` more universally
-* Make sure that the components code can crush the builder as long as they passed the compilation
+* Make sure that the components code can't crush the builder (easily) as long as they passed the compilation
 
 Since this refactoring focuses on better code, better safety and better performance, the old functionalities provided by BBQ-SG 0.4.X will stay.
 
 
 
 ### TODOs
-* Try to apply the type-safe routing idea on it
+* Process Staging & JSON format widget
 * Try it in production
 
 

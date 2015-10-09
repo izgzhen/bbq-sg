@@ -17,7 +17,8 @@ library
                        BBQ.Post,
                        BBQ.Task,
                        BBQ.Main,
-                       BBQ.Route
+                       BBQ.Route,
+                       BBQ.Index
   -- other-modules:       
   default-extensions:  TemplateHaskell,
                        QuasiQuotes,

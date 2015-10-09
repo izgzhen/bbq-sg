@@ -3,18 +3,23 @@ module BBQ.Main where
 import BBQ.Import
 import BBQ.Task
 import BBQ.Post
+import BBQ.Index
+import qualified Data.HashMap.Lazy as HM
 
 main :: IO ()
 main =
     let config@BuildConfig{..} = defaultBuildConfig
-        task = postTask
     in shakeArgs shakeOptions { shakeFiles = targetDir } $ do
         let buildAt = (</>) targetDir
         phony "clean" $ removeFilesAfter targetDir ["//*"]
-        buildAt (mdSrcDir </> "*.html") %> \out -> do
+        buildAt "index.html" %> \out -> do
             hs <- getDirectoryFiles "" [ hsSrcDir </> "/*.hs" ]
             need hs
-            runTask out task config
-        want [buildAt mdSrcDir </> "2014-04-24-example.html"]
+            mPostWidget <- runTask out postTask config
+            -- Stage 1 ends
+            runCollectTask config (HM.fromList $ catMaybes [mPostWidget]) indexStage2
+
+        want [buildAt "index.html"]
+
 
 
