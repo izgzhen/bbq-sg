@@ -11,7 +11,7 @@ import Text.Blaze.Html (toHtml)
 newtype PostId = PostId { unPostId :: Text }
     deriving (PathInfo)
 
-data WebPath = Home
+data WebPath = Index
              | Post PostId
              deriving (Typeable)
 

@@ -12,11 +12,9 @@ type Build = ReaderT BuildConfig (Except Text)
 runBuild b config = let Identity ret = runExceptT $ runReaderT b config in ret
 
 
-runReadTask :: BuildConfig -> String -> ReadTask x -> Action (Build [x])
-runReadTask config out (ReadTask extract) = do
-    let src = dropDirectory1 out -<.> ".md"
-    need [src]
-    markdowns <- getDirectoryFiles "" [src] :: Action [String]
+runReadTask :: BuildConfig -> [FilePath] -> ReadTask x -> Action (Build [x])
+runReadTask config markdowns (ReadTask extract) = do
+    need markdowns
     texts <- mapM readFile' markdowns
     dates <- mapM getGitDate markdowns
     let metas = fmap (\(x, y, z) -> extract x y z) (zip3 texts dates markdowns)
@@ -48,9 +46,9 @@ data Task meta summary extra = Task {
     initialSummary :: summary
 }
 
-runTask :: FilePath -> Task m s e -> BuildConfig -> Action (Maybe (Text, Widget))
-runTask fp (Task rt s wt r bw is) config = do
-    metas <- runReadTask config fp rt
+runTask :: [FilePath] -> Task m s e -> BuildConfig -> Action (Maybe (Text, Widget))
+runTask src (Task rt s wt r bw is) config = do
+    metas <- runReadTask config src rt
     case runBuild (b metas) config of
         Left errMsg -> do
             error_ $ "ERROR in runTask: " ++ errMsg

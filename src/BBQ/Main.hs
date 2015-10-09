@@ -6,6 +6,11 @@ import BBQ.Post
 import BBQ.Index
 import qualified Data.HashMap.Lazy as HM
 
+hsDeps :: FilePath -> Action ()
+hsDeps srcDir = do
+    hs <- getDirectoryFiles "" [ srcDir </> "/*.hs" ]
+    need hs
+
 main :: IO ()
 main =
     let config@BuildConfig{..} = defaultBuildConfig
@@ -13,9 +18,9 @@ main =
         let buildAt = (</>) targetDir
         phony "clean" $ removeFilesAfter targetDir ["//*"]
         buildAt "index.html" %> \out -> do
-            hs <- getDirectoryFiles "" [ hsSrcDir </> "/*.hs" ]
-            need hs
-            mPostWidget <- runTask out postTask config
+            hsDeps hsSrcDir
+            mds <- getDirectoryFiles "" [ mdSrcDir </> "*.md" ]
+            mPostWidget <- runTask mds postTask config
             -- Stage 1 ends
             runCollectTask config (HM.fromList $ catMaybes [mPostWidget]) indexStage2
 
