@@ -22,15 +22,15 @@ data WikiExtra = WikiExtra {
 }
 
 wikiTask :: Task WikiMeta WikiSummary WikiExtra Widget
-wikiTask = Task extract' summarize' render' relate' (Just buildWidget') initialSummary'
+wikiTask = Task extract summarize render relate (Just buildWidget) (Just emerge) initialSummary
     where
-        extract' = ReadTask f
+        extract = ReadTask f
             where
                 f text gitDate path = do
                   (name, title, cDate, mDate, pandoc) <- markDownExtract text gitDate path
                   return $ WikiMeta (WikiId $ pack name) title mDate pandoc
 
-        render' = WriteTask f deps
+        render = WriteTask f deps
             where
                 f (wm@WikiMeta{..}, we@WikiExtra{..}) = do
                     link <- absolutePath $ Wiki wid
@@ -39,28 +39,26 @@ wikiTask = Task extract' summarize' render' relate' (Just buildWidget') initialS
                     return (path, renderHtml html)
                 deps = [$(templDirQ "wiki.hamlet")]
 
-        summarize' ws@WikiSummary{..} wm = return $ ws { subWikis = wid wm : subWikis }
+        summarize ws@WikiSummary{..} wm = return $ ws { subWikis = wid wm : subWikis }
 
-        relate' ws wm = return $ WikiExtra { menu = subWikis ws }
+        relate ws wm = return $ WikiExtra { menu = subWikis ws }
 
-        initialSummary' = WikiSummary []
+        initialSummary = WikiSummary []
 
-        buildWidget' ws@WikiSummary{..} = (,) "wikiList" $ [hamlet|
+        emerge :: WriteTask (WikiSummary, [FilePath], FilePath)
+        emerge = WriteTask f deps
+            where
+                f :: (WikiSummary, [FilePath], FilePath) -> Build (FilePath, Text)
+                f (ws@WikiSummary{..}, subDirs, rootDir) = do
+                    -- subWikis
+                    -- subDirs
+                    -- rootDir
+                    let name = takeFileName rootDir
+                    return ("build" ++ rootDir </> name ++ ".md", "nothing here :(")
+
+                deps = []
+
+
+        buildWidget ws@WikiSummary{..} = (,) "wikiList" $ [hamlet|
                 <p>This is wiki widget example
             |]
-
-wikiCollectTask :: FilePath -> WriteTask (HashMap Text Widget)
-wikiCollectTask fp = WriteTask f deps
-    where
-        f widgets = do
-            let mWiki = HM.lookup "wikiList" widgets
-            let mWIndex = HM.lookup "wikiDirWidget" widgets
-            let html = $(hamletFile $(templDirQ "wiki-index.hamlet")) contentRender
-            return (fp, renderHtml html)
-
-        deps = [$(templDirQ "wiki-index.hamlet")]
-
-wikiMkDirWidget :: [FilePath] -> Maybe (Text, Widget)
-wikiMkDirWidget dirs = Just $ (,) "wikiDirWidget" [hamlet|
-        Wiki Dir Widget Examples
-    |]

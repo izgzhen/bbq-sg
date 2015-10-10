@@ -26,7 +26,7 @@ data PostSummary = PostSummary {
   categories :: HashMap Text [PostId] -- Tag -> Posts
 }
 
-postTask = Task extract' summarize' render' relate' (Just buildWidget') initialSummary'
+postTask = Task extract' summarize' render' relate' (Just buildWidget') Nothing initialSummary'
     where
         extract' = ReadTask f
             where
@@ -61,6 +61,8 @@ postTask = Task extract' summarize' render' relate' (Just buildWidget') initialS
 
         buildWidget' ps@PostSummary{..} = (,) "postsList"
                                           $ [hamlet|
-                                              <p> Sorry, not developed yet :(
+                                              <ol>
+                                                  $forall p <- categories
+                                                    <li>show p
                                             |]
 
