@@ -3,6 +3,8 @@ module BBQ.Component.Wiki where
 import BBQ.Import
 import BBQ.Task
 import BBQ.Component.Common
+import qualified Data.HashMap.Lazy as HM
+import BBQ.Route
 
 data WikiMeta = WikiMeta {
   wid     :: WikiId
@@ -12,7 +14,7 @@ data WikiMeta = WikiMeta {
 }
 
 data WikiSummary = WikiSummary {
-  subWikis :: [FilePath]
+  subWikis :: [WikiId]
 }
 
 data WikiExtra = WikiExtra {
@@ -28,17 +30,37 @@ wikiTask = Task extract' summarize' render' relate' (Just buildWidget') initialS
                   (name, title, cDate, mDate, pandoc) <- markDownExtract text gitDate path
                   return $ WikiMeta (WikiId $ pack name) title mDate pandoc
 
-        render' = undefined
-        summarize' = undefined
-        relate' = undefined
-        buildWidget' = undefined
+        render' = WriteTask f deps
+            where
+                f (wm@WikiMeta{..}, we@WikiExtra{..}) = do
+                    link <- absolutePath $ Wiki wid
+                    path <- filePath $ Wiki wid
+                    let html = $(hamletFile $(templDirQ "wiki.hamlet")) ()
+                    return (path, renderHtml html)
+                deps = [$(templDirQ "wiki.hamlet")]
+
+        summarize' ws@WikiSummary{..} wm = return $ ws { subWikis = wid wm : subWikis }
+
+        relate' ws wm = return $ WikiExtra { menu = subWikis ws }
+
         initialSummary' = WikiSummary []
 
-wikiCollectTask :: WriteTask (HashMap Text Widget)
-wikiCollectTask = WriteTask f deps
+        buildWidget' ws@WikiSummary{..} = (,) "wikiList" $ [hamlet|
+                <p>This is wiki widget example
+            |]
+
+wikiCollectTask :: FilePath -> WriteTask (HashMap Text Widget)
+wikiCollectTask fp = WriteTask f deps
     where
-        f = undefined
-        deps = undefined
+        f widgets = do
+            let mWiki = HM.lookup "wikiList" widgets
+            let mWIndex = HM.lookup "wikiDirWidget" widgets
+            let html = $(hamletFile $(templDirQ "wiki-index.hamlet")) contentRender
+            return (fp, renderHtml html)
+
+        deps = [$(templDirQ "wiki-index.hamlet")]
 
 wikiMkDirWidget :: [FilePath] -> Maybe (Text, Widget)
-wikiMkDirWidget dirs = Just undefined
+wikiMkDirWidget dirs = Just $ (,) "wikiDirWidget" [hamlet|
+        Wiki Dir Widget Examples
+    |]

@@ -1,11 +1,14 @@
 module BBQ.Task where
 
-import BBQ.Import
+import BBQ.Import hiding (toList)
 import qualified Data.HashMap.Lazy as HM
-
+import Data.Tree
+import Data.Foldable (toList)
 
 data ReadTask  x = ReadTask  (Text -> Text -> FilePath -> Build x)
+
 data WriteTask x = WriteTask (x -> Build (FilePath, Text)) [FilePath]
+                 | VoidWriteTask
 
 type Build = ReaderT BuildConfig (Except Text)
 runBuild b config = let Identity ret = runExceptT $ runReaderT b config in ret
@@ -21,38 +24,23 @@ data Task meta summary extra widget = Task {
 
 -------------------------- / Runner / -------------------------------------
 
-runRecursiveTask :: BuildConfig -> Task m s e w ->
-                    WriteTask (HashMap Text w) ->
-                    ([FilePath] -> Maybe (Text, w)) ->
-                    FilePath -> 
-                    Action ()
-runRecursiveTask config task collectTask mkDirWidget rootDir = run rootDir
-    where
-        run dir = do
-            mdFiles <- getDirectoryFiles dir [ "*.md" ]
-            subDirs <- getDirectoryDirs dir
-            mWidget <- runTask mdFiles task config
-            let mDirWidget = mkDirWidget subDirs
-            runCollectTask config (HM.fromList $ catMaybes [mWidget, mDirWidget]) collectTask
-            mapM_ run subDirs
-
-runReadTask :: BuildConfig -> [FilePath] -> ReadTask x -> Action (Build [x])
+runReadTask :: (Traversable t, Foldable t) => BuildConfig -> t FilePath -> ReadTask x -> Action (Build (t x))
 runReadTask config markdowns (ReadTask extract) = do
-    need markdowns
-    texts <- mapM readFile' markdowns
-    dates <- mapM getGitDate markdowns
-    let metas = fmap (\(x, y, z) -> extract x y z) (zip3 texts dates markdowns)
+    need $ toList markdowns
+    metas <- forM markdowns (\m -> do
+                text <- readFile' m
+                date <- getGitDate m
+                return $ extract text date m)
     return $ sequence metas
 
-
-runWriteTask :: BuildConfig -> [x] -> WriteTask x -> Action ()
 runWriteTask config xs (WriteTask builder deps) = do
-    let builds = map builder xs
-    let outputs = map (\b -> runBuild b config) builds
+    let builds = fmap builder xs
+    let outputs = fmap (\b -> runBuild b config) builds
     need deps
     forM_ outputs $ \eResult -> case eResult of
         Left errMsg      -> error_ $ "ERROR in write task: " ++ errMsg
         Right (fp, text) -> writeFile' fp text
+runWriteTask _ _ VoidWriteTask = return ()
 
 runCollectTask :: BuildConfig -> HashMap Text widget -> WriteTask (HashMap Text widget) -> Action ()
 runCollectTask config hm (WriteTask builder deps) = do
@@ -61,20 +49,22 @@ runCollectTask config hm (WriteTask builder deps) = do
         Left errMsg      -> error_ $ "ERROR in collect task: " ++ errMsg
         Right (fp, text) -> writeFile' fp text
 
-runTask :: [FilePath] -> Task m s e w -> BuildConfig -> Action (Maybe (Text, w))
-runTask src (Task rt s wt r bw is) config = do
+runTask src (Task rt s wt r buildWidget is) mkEmerge emerger config = do
     metas <- runReadTask config src rt
     case runBuild (b metas) config of
         Left errMsg -> do
             error_ $ "ERROR in runTask: " ++ errMsg
             return Nothing
-        Right (pairs, mWidget) -> do
+        Right (pairs, mWidget, emerge) -> do
             runWriteTask config pairs wt
+            runWriteTask config emerge emerger
             return mWidget
     where
         b metas' = do
             metas <- metas'
-            sm <- foldM s is metas
-            extras <- sequence $ map (r sm) metas
-            return (zip metas extras, fmap ($ sm) bw)
+            summary <- foldM s is metas
+            let emerge = mkEmerge summary
+            extras <- sequence $ fmap (r summary) metas
+            return (zip metas extras, ($ summary) <$> buildWidget, emerge)
+
 

@@ -19,7 +19,8 @@ library
                        BBQ.Route,
                        BBQ.Component.Post,
                        BBQ.Component.Index,
-                       BBQ.Component.Wiki
+                       BBQ.Component.Wiki,
+                       BBQ.Component.Common
   -- other-modules:       
   default-extensions:  TemplateHaskell,
                        QuasiQuotes,
@@ -47,6 +48,7 @@ library
                        iso8601-time,
                        classy-prelude,
                        web-routes,
-                       web-routes-th
+                       web-routes-th,
+                       containers
   hs-source-dirs:      src
   default-language:    Haskell2010

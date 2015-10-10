@@ -1,23 +1,29 @@
-module BBQ.Config where
+module BBQ.Config (
+  templDirQ
+, BuildConfig(..)
+, defaultBuildConfig
+, SiteConfig(..)
+) where
 
 import Language.Haskell.TH
 import System.FilePath
 import Prelude (String)
 import ClassyPrelude
 
-defaultTemplateDir :: String
+defaultTemplateDir :: FilePath
 defaultTemplateDir = "templates"
 
-templDirQ :: String -> Q Exp
+templDirQ :: FilePath -> Q Exp
 templDirQ s = [| defaultTemplateDir </> s |]
 
 
 -- Don't export the constructor, use record syntax instead
 data BuildConfig = BuildConfig {
-    targetDir  :: String,
-    hsSrcDir   :: String,
-    hsOther    :: [String],
-    mdSrcDir   :: String,
+    targetDir  :: FilePath,
+    hsSrcDir   :: FilePath,
+    hsOther    :: [FilePath],
+    mdSrcDir   :: FilePath,
+    wikiSrcDir :: FilePath,
     siteConfig :: SiteConfig
 }
 
@@ -26,6 +32,7 @@ defaultBuildConfig = BuildConfig {
     hsSrcDir   = "src", -- XXX: overlapping with .cabal file
     hsOther    = [],
     mdSrcDir   = "post",
+    wikiSrcDir = "wiki",
     siteConfig = defSiteConfig
 }
 
