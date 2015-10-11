@@ -1,7 +1,5 @@
 $doctype 5
 <html>
     <head>
-        <title>#{title}
+        <title>Post 
     <body>
-        <p>My URL -- #{link}
-        <p>My date -- #{show date}

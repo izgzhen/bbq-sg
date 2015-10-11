@@ -2,7 +2,7 @@ module BBQ.Main where
 
 import BBQ.Import
 import BBQ.Task
--- import BBQ.Component.Post
+import BBQ.Component.Post
 import BBQ.Component.Index
 import BBQ.Component.Wiki
 import BBQ.FTree
@@ -16,16 +16,19 @@ hsDeps srcDir = do
 main :: IO ()
 main = do
     let config@BuildConfig{..} = defaultBuildConfig
-    -- topPathTree = mkFileTree "."
-    wikiPathTree <-  mkFileTree "wiki"
+
+    wikiPathTree <- mkFileTree "wiki"
+    posts        <- mkFileTree "post" >>= (\(Dir _ trees) -> return $ filterFiles trees)
     shakeArgs shakeOptions { shakeFiles = targetDir } $ do
         let buildAt = (</>) targetDir
-    --     want [buildAt "index.html"]
         phony "clean" $ removeFilesAfter targetDir ["//*"]
 
         want [buildAt wikiSrcDir </> "index.html"]
+        want [buildAt mdSrcDir </> "index.html"]
 
-        runRecTask targetDir wikiRecTask wikiPathTree
+        runRecTask targetDir wikiTask wikiPathTree
+
+        runTask postTask targetDir mdSrcDir posts []
 
     --     buildAt (mdSrcDir </> "*.html") %> \out -> do
     --         hsDeps hsSrcDir

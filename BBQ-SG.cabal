@@ -19,7 +19,7 @@ library
                        BBQ.Main,
                        BBQ.Route,
                        BBQ.FTree,
---                       BBQ.Component.Post,
+                       BBQ.Component.Post,
                        BBQ.Component.Index,
                        BBQ.Component.Wiki,
                        BBQ.Component.Common

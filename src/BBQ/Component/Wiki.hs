@@ -17,8 +17,8 @@ data WikiSummary = WikiSummary {
   subWikis :: [FilePath] -- SubWiki URLs relative to root
 }
 
-wikiRecTask :: RecursiveTask WikiMeta WikiSummary
-wikiRecTask = RecursiveTask "md" extract summarize renderIndex renderPage
+wikiTask :: Task WikiMeta WikiSummary
+wikiTask = Task "md" extract summarize renderIndex renderPage
     where
         extract filepath gitDate text =
             case markDownExtract text gitDate filepath of
