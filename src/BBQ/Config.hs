@@ -7,7 +7,7 @@ module BBQ.Config (
 
 import Language.Haskell.TH
 import System.FilePath
-import Prelude (String)
+-- import Prelude (String)
 import ClassyPrelude
 
 defaultTemplateDir :: FilePath
@@ -27,6 +27,7 @@ data BuildConfig = BuildConfig {
     siteConfig :: SiteConfig
 }
 
+defaultBuildConfig :: BuildConfig
 defaultBuildConfig = BuildConfig {
     targetDir  = "build",
     hsSrcDir   = "src", -- XXX: overlapping with .cabal file
@@ -41,6 +42,7 @@ data SiteConfig = SiteConfig {
     author :: Text
 }
 
+defSiteConfig :: SiteConfig
 defSiteConfig = SiteConfig {
     host   = "http://localhost",
     author = "yourname"

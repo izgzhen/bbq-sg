@@ -1,93 +1,55 @@
-module BBQ.Task (
-  ReadTask(..)
-, WriteTask(..)
-, Build
-, runBuild
-, Task(..)
-, runReadTask
-, runBatchWriteTask
-, runSimpleWriteTask
-, runTask
-, emptyCont
-) where
+module BBQ.Task where
 
-import BBQ.Import hiding (toList)
+import BBQ.Import
 import qualified Data.HashMap.Lazy as HM
-import Data.Foldable (toList)
+import BBQ.FTree
 
-data ReadTask  x = ReadTask  (Text -> Text -> FilePath -> Build x)
-
-data WriteTask x = WriteTask (x -> Build (FilePath, Text)) [FilePath]
-                 | VoidWriteTask
-
-type Build = ReaderT BuildConfig (Except Text)
-runBuild b config = let Identity ret = runExceptT $ runReaderT b config in ret
-
-data Task meta summary extra widget = Task {
-    extract         :: ReadTask meta,
-    summarize       :: summary -> meta -> Build summary,
-    render          :: WriteTask (meta, extra),
-    relate          :: summary -> meta -> Build extra,
-    buildWidget     :: Maybe (summary -> (Text, widget)),
-    mEmerge         :: Maybe (WriteTask (summary, [FilePath], FilePath)), -- subdirs and current dir
-    initialSummary  :: summary
+data RecursiveTask meta s = RecursiveTask {
+    extension   :: FilePath,
+    extract     :: FilePath -> Text -> Text -> Maybe meta,
+    summarize   :: FilePath -> [FilePath] -> HashMap FilePath meta -> s,
+    renderIndex :: s -> Action Text,
+    renderPage  :: s -> meta -> Action Text -- Source path, rendered text
 }
 
--------------------------- / Runner / -------------------------------------
+runRecTask :: FilePath -> RecursiveTask m s -> PathTree -> Rules ()
+runRecTask buildPath rec@RecursiveTask{..} pathTree@(Dir _ _) = do
+    let (Dir rootDir subTrees) = filterFTree (\f -> takeExtension f == "." ++ extension) pathTree
+    let files = filterFiles subTrees
+    let dirs  = filterDirs subTrees
 
-runReadTask :: (Traversable t, Foldable t) => BuildConfig -> t FilePath -> ReadTask x -> Action (Build (t x))
-runReadTask config sources (ReadTask extract) = do
-    need $ toList sources
-    metas <- forM sources (\src -> do
-                text <- readFile' src
-                date <- getGitDate src
-                return $ extract text date src)
-    return $ sequence metas
+    want [buildPath </> rootDir </> "index.html"]
+    want $ map (\f -> buildPath </> f -<.> ".html") files
 
-runBatchWriteTask :: (Functor f, MonoFoldable c, MonoFoldable (f (Either Text (FilePath, Text))),
-                     Element (f (Either Text (FilePath, Text))) ~ Either Text t1,
-                     Element (f (Either Text (FilePath, Text))) ~ Either t2 (FilePath, c),
-                     Element c ~ Char) =>
-                     BuildConfig -> f t -> WriteTask t -> Action ()
-runBatchWriteTask config xs (WriteTask builder deps) = do
-    let builds = fmap builder xs
-    let outputs = fmap (\b -> runBuild b config) builds
-    need deps
-    forM_ outputs $ \eResult -> case eResult of
-        Left errMsg      -> error_ $ "ERROR in write task: " ++ errMsg
-        Right (fp, text) -> writeFile' fp text
-runBatchWriteTask _ _ VoidWriteTask = return ()
-
-runSimpleWriteTask :: BuildConfig -> x -> WriteTask x -> Action ()
-runSimpleWriteTask config x (WriteTask builder deps) = do
-    need deps
-    case runBuild (builder x) config of
-        Left errMsg      -> error_ $ "ERROR in collect task: " ++ errMsg
-        Right (fp, text) -> writeFile' fp text
-
-runTask :: BuildConfig -> FilePath -> Task m s e w -> (BuildConfig -> FilePath -> Action ()) -> Action (Maybe (Text, w))
-runTask config rootDir task@Task{..} continuation = do
-    files <- getDirectoryFiles "" [ rootDir </> "*.md" ] -- Current level
-    dirs  <- getDirectoryDirs rootDir
-    metasbuild <- runReadTask config files extract
-    case runBuild (b metasbuild) config of
-        Left errMsg -> do
-            error_ $ "Error in runTask: " ++ errMsg
-            return Nothing
-        Right (pairs, mWidget, summary) -> do
-            runBatchWriteTask config pairs render
-            case mEmerge of
-                Nothing -> return ()
-                Just emerge -> runSimpleWriteTask config (summary, dirs, rootDir) emerge 
-            forM_ dirs (\d -> continuation config d)
-            return mWidget
-    where
-        b metasbuild = do
-            metas   <- metasbuild
-            summary <- foldM summarize initialSummary metas
-            extras  <- sequence $ fmap (relate summary) metas
-            return (zip metas extras, ($ summary) <$> buildWidget, summary)
+    getMS <- newCache' $ do
+        need files
+        texts <- mapM readFile' files
+        gitDates <- mapM getGitDate files
+        let metas = catMaybes $ map (\(f, d, t) -> extract f d t) (zip3 files gitDates texts)
+        let filenames = map (dropExtension . takeFileName) files
+        let metaMap = HM.fromList $ zip filenames metas
+        let summary = summarize rootDir (map (\(Dir x _) -> x) dirs) metaMap
+        return (metaMap, summary)
 
 
+    buildPath </> rootDir </> "*.html" %> \out -> do
+        (metaMap, summary) <- getMS
+        case HM.lookup (dropExtension $ takeFileName out) metaMap of
+            Nothing   -> return ()
+            Just meta -> renderPage summary meta >>= writeFile' out
 
-emptyCont _ _ = return ()
+    buildPath </> rootDir </> "index.html" %> \out -> do
+        (_, summary) <- getMS
+        t <- renderIndex summary
+        writeFile' out t
+
+    forM_ dirs $ runRecTask buildPath rec
+  where
+    getGitDate p = do
+        let gitCmd = "git log -1 --format=%ci --" :: String
+        Stdout gitDate <- cmd gitCmd [unpack p]
+        return (pack gitDate)
+
+
+runRecTask _ _ _ = error "Impossible happens"
+

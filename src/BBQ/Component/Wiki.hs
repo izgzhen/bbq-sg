@@ -4,7 +4,7 @@ import BBQ.Import
 import BBQ.Task
 import BBQ.Component.Common
 import qualified Data.HashMap.Lazy as HM
-import BBQ.Route
+-- import BBQ.Route
 
 data WikiMeta = WikiMeta {
   wid     :: WikiId
@@ -14,51 +14,33 @@ data WikiMeta = WikiMeta {
 }
 
 data WikiSummary = WikiSummary {
-  subWikis :: [WikiId]
+  subWikis :: [FilePath] -- SubWiki URLs relative to root
 }
 
-data WikiExtra = WikiExtra {
-  menu :: [WikiId]
-}
-
-wikiTask :: Task WikiMeta WikiSummary WikiExtra Widget
-wikiTask = Task extract summarize render relate (Just buildWidget) (Just emerge) initialSummary
+wikiRecTask :: RecursiveTask WikiMeta WikiSummary
+wikiRecTask = RecursiveTask "md" extract summarize renderIndex renderPage
     where
-        extract = ReadTask f
-            where
-                f text gitDate path = do
-                  (name, title, cDate, mDate, pandoc) <- markDownExtract text gitDate path
-                  return $ WikiMeta (WikiId $ pack name) title mDate pandoc
+        extract filepath gitDate text =
+            case markDownExtract text gitDate filepath of
+                Nothing -> Nothing
+                Just (name, title, _, mDate, pandoc) ->
+                    Just $ WikiMeta (WikiId $ pack name) title mDate pandoc
 
-        render = WriteTask f deps
-            where
-                f (wm@WikiMeta{..}, we@WikiExtra{..}) = do
-                    link <- absolutePath $ Wiki wid
-                    path <- filePath $ Wiki wid
-                    let html = $(hamletFile $(templDirQ "wiki.hamlet")) ()
-                    return (path, renderHtml html)
-                deps = [$(templDirQ "wiki.hamlet")]
+        summarize parentDir subDirs metaMap =
+            let fileNames = map (parentDir </>) $ HM.keys metaMap
+            in  WikiSummary (fileNames ++ subDirs)
 
-        summarize ws@WikiSummary{..} wm = return $ ws { subWikis = wid wm : subWikis }
+        renderIndex WikiSummary{..} = do
+            need [$(templDirQ "wiki-index.hamlet")]
+            let html = $(hamletFile $(templDirQ "wiki-index.hamlet")) ()
+            return $ renderHtml html
 
-        relate ws wm = return $ WikiExtra { menu = subWikis ws }
-
-        initialSummary = WikiSummary []
-
-        emerge :: WriteTask (WikiSummary, [FilePath], FilePath)
-        emerge = WriteTask f deps
-            where
-                f :: (WikiSummary, [FilePath], FilePath) -> Build (FilePath, Text)
-                f (ws@WikiSummary{..}, subDirs, rootDir) = do
-                    -- subWikis
-                    -- subDirs
-                    -- rootDir
-                    let name = takeFileName rootDir
-                    return ("build" ++ rootDir </> name ++ ".md", "nothing here :(")
-
-                deps = []
+        renderPage WikiSummary{..} WikiMeta{..} = do
+            need [$(templDirQ "wiki.hamlet")]
+            let html = $(hamletFile $(templDirQ "wiki.hamlet")) ()
+            return $ renderHtml html
 
 
-        buildWidget ws@WikiSummary{..} = (,) "wikiList" $ [hamlet|
-                <p>This is wiki widget example
-            |]
+
+
+
