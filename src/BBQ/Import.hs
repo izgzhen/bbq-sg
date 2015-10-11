@@ -17,13 +17,20 @@ module BBQ.Import (
 , module Development.Shake.FilePath
 , module Control.Monad.Except
 , module BBQ.Route
+, module GHC.Generics
+, BBQ.Import.encode
+, BBQ.Import.decode
+, ToJSON
+, FromJSON
 ) where
 
 import BBQ.Route
 import BBQ.Config
+import GHC.Generics (Generic)
+import Data.Aeson as A (encode, decode, FromJSON, ToJSON)
 import Text.Hamlet
 import Data.HashMap.Lazy (HashMap)
-import ClassyPrelude
+import ClassyPrelude hiding (decodeUtf8, encodeUtf8, decode, encode)
 import Control.Monad.Except (ExceptT, runExceptT, throwError, Except)
 import qualified Text.Blaze.Html.Renderer.Text as BLZ
 import Development.Shake hiding (readFile', writeFile', Env, (*>))
@@ -33,6 +40,8 @@ import Development.Shake.FilePath
 import qualified Data.Text.Lazy as TL
 import Text.Pandoc (Pandoc)
 import Data.List.Split (splitOn)
+import Data.Text.Lazy.Encoding (decodeUtf8, encodeUtf8)
+
 
 error_ :: Text -> Action ()
 error_ t = error $ unpack t
@@ -66,3 +75,8 @@ newCache' action = do
     cache <- newCache $ \() -> action
     return (cache ())
 
+encode :: ToJSON a => a -> Text
+encode = TL.toStrict . decodeUtf8 . A.encode
+
+decode :: FromJSON a => Text -> Maybe a
+decode = A.decode . encodeUtf8 . TL.fromStrict

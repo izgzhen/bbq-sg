@@ -5,11 +5,18 @@ import qualified Data.HashMap.Lazy as HM
 import BBQ.FTree
 
 data Task meta s = Task {
-    extension   :: FilePath,
-    extract     :: FilePath -> Text -> Text -> Maybe meta,
-    summarize   :: FilePath -> [FilePath] -> HashMap FilePath meta -> s, -- task implementor can choose to ignore the second parameter
-    renderIndex :: s -> Action Text,
-    renderPage  :: s -> meta -> Action Text -- Source path, rendered text
+    extension    :: FilePath,
+    extract      :: FilePath -> Text -> Text -> Maybe meta,
+    summarize    :: FilePath -> [FilePath] -> HashMap FilePath meta -> s, -- task implementor can choose to ignore the second parameter
+    renderIndex  :: s -> Action Text,
+    renderPage   :: s -> meta -> Action Text, -- Source path, rendered text
+    renderWidget :: s -> Action Text
+}
+
+data Collector = Collector {
+    target   :: FilePath,
+    widgets  :: [FilePath],
+    resolver :: HashMap FilePath Text -> Maybe Text
 }
 
 runRecTask :: FilePath -> Task m s -> PathTree -> Rules ()
@@ -27,6 +34,7 @@ runRecTask _ _ _ = error "Impossible happens"
 runTask :: Task meta s -> FilePath -> FilePath -> [FilePath] -> [FilePath] -> Rules ()
 runTask Task{..} buildPath rootDir files dirPaths = do
     want [buildPath </> rootDir </> "index.html"]
+    want [buildPath </> rootDir </> "widget.json"]
     want $ map (\f -> buildPath </> f -<.> ".html") files
 
     getMS <- newCache' $ do
@@ -51,10 +59,26 @@ runTask Task{..} buildPath rootDir files dirPaths = do
         t <- renderIndex summary
         writeFile' out t
 
+    buildPath </> rootDir </> "widget.json" %> \out -> do
+        (_, summary) <- getMS
+        t <- renderWidget summary
+        writeFile' out t
+
   where
     getGitDate p = do
         let gitCmd = "git log -1 --format=%ci --" :: String
         Stdout gitDate <- cmd gitCmd [unpack p]
         return (pack gitDate)
 
+
+runCollectTask :: FilePath -> Collector -> Rules ()
+runCollectTask buildPath Collector{..} = do
+    want [buildPath </> target]
+    let widgets' = map (buildPath </>) widgets
+    buildPath </> target %> \out -> do
+        need widgets'
+        texts <- mapM readFile' widgets'
+        case resolver $ HM.fromList $ zip widgets texts of
+            Nothing   -> putNormal $ "can't build " ++ target
+            Just text -> writeFile' out text
 

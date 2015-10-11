@@ -7,9 +7,13 @@ import BBQ.Config
 import System.FilePath
 import Text.Hamlet
 import Text.Blaze.Html (toHtml)
+import Data.Aeson (ToJSON, FromJSON)
 
 newtype PostId = PostId { unPostId :: Text }
-    deriving (PathInfo)
+    deriving (PathInfo, Eq, Show, Ord, Generic)
+
+instance ToJSON PostId
+instance FromJSON PostId
 
 newtype WikiId = WikiId { unWikiId :: Text }
     deriving (PathInfo)

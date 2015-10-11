@@ -25,10 +25,13 @@ main = do
 
         want [buildAt wikiSrcDir </> "index.html"]
         want [buildAt mdSrcDir </> "index.html"]
+        want [buildAt "index.html"]
 
         runRecTask targetDir wikiTask wikiPathTree
 
         runTask postTask targetDir mdSrcDir posts []
+
+        runCollectTask targetDir indexCollector
 
     --     buildAt (mdSrcDir </> "*.html") %> \out -> do
     --         hsDeps hsSrcDir

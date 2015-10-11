@@ -1,11 +1,13 @@
 module BBQ.Component.Post (
   postTask
+, PostWidget(..)
 ) where
 
 import BBQ.Import
 import BBQ.Task
 import qualified Data.HashMap.Lazy as HM
 import BBQ.Component.Common
+import qualified Data.Set as S
 
 data PostMeta = PostMeta {
   pid     :: PostId
@@ -19,8 +21,16 @@ data PostSummary = PostSummary {
   categories :: HashMap Text [PostId] -- Tag -> Posts
 }
 
+data PostWidget = PostWidget {
+  allPosts   :: S.Set PostId
+} deriving (Generic, Show)
+
+instance ToJSON PostWidget
+instance FromJSON PostWidget
+
+
 postTask :: Task PostMeta PostSummary
-postTask = Task "md" extract summarize renderIndex renderPage
+postTask = Task "md" extract summarize renderIndex renderPage renderWidget
     where
         extract filepath gitDate text =
             case markDownExtract text gitDate filepath of
@@ -46,3 +56,7 @@ postTask = Task "md" extract summarize renderIndex renderPage
             need [$(templDirQ "post.hamlet")]
             let html = $(hamletFile $(templDirQ "post.hamlet")) ()
             return $ renderHtml html
+
+        renderWidget PostSummary{..} = do
+            let widget = PostWidget . S.fromList . concat $ HM.elems categories
+            return $ encode widget

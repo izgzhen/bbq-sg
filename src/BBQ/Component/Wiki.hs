@@ -17,8 +17,15 @@ data WikiSummary = WikiSummary {
   subWikis :: [FilePath] -- SubWiki URLs relative to root
 }
 
+data WikiWidget = WikiWidget {
+  wikis :: [FilePath]
+} deriving (Generic, Show)
+
+instance ToJSON WikiWidget
+instance FromJSON WikiWidget
+
 wikiTask :: Task WikiMeta WikiSummary
-wikiTask = Task "md" extract summarize renderIndex renderPage
+wikiTask = Task "md" extract summarize renderIndex renderPage renderWidget
     where
         extract filepath gitDate text =
             case markDownExtract text gitDate filepath of
@@ -40,7 +47,6 @@ wikiTask = Task "md" extract summarize renderIndex renderPage
             let html = $(hamletFile $(templDirQ "wiki.hamlet")) ()
             return $ renderHtml html
 
-
-
-
-
+        renderWidget WikiSummary{..} = do
+            let widget = WikiWidget subWikis
+            return $ encode widget
