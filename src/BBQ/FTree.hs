@@ -1,10 +1,16 @@
-module BBQ.FTree where
+module BBQ.FTree (
+  mkFileTree
+, PathTree
+, filterFiles
+, filterDirs
+, filterFTree
+, FTree(..)
+) where
 
 import System.Directory
 import System.FilePath
 import Control.Monad
 import Data.Maybe
--- import qualified Data.HashMap.Lazy as HM
 import Prelude
 
 data FTree x = Dir x [FTree x]

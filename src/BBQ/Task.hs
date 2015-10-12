@@ -1,4 +1,10 @@
-module BBQ.Task where
+module BBQ.Task (
+  Task(..)
+, Collector(..)
+, runRecTask
+, runTask
+, runCollectTask
+) where
 
 import BBQ.Import
 import qualified Data.HashMap.Lazy as HM

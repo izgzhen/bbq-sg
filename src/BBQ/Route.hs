@@ -1,4 +1,12 @@
-module BBQ.Route where
+module BBQ.Route (
+  absolutePath
+, filePath
+, PostId(..)
+, WikiId(..)
+, WebPath(..)
+, msgTranlator
+, contentRender
+) where
 
 import ClassyPrelude
 import Web.Routes

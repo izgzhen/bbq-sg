@@ -1,4 +1,6 @@
-module BBQ.Component.Index where
+module BBQ.Component.Index (
+  indexCollector
+) where
 
 import BBQ.Import
 import qualified Data.HashMap.Lazy as HM

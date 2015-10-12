@@ -1,4 +1,7 @@
-module BBQ.Component.Wiki where
+module BBQ.Component.Wiki (
+  wikiTask
+, WikiWidget(..)
+) where
 
 import BBQ.Import
 import BBQ.Task
