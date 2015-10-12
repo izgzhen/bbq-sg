@@ -1,5 +1,7 @@
 module BBQ.Component.Wiki (
   wikiTask
+, WikiMeta(..)
+, WikiSummary(..)
 , WikiWidget(..)
 ) where
 
@@ -28,7 +30,7 @@ instance ToJSON WikiWidget
 instance FromJSON WikiWidget
 
 wikiTask :: Task WikiMeta WikiSummary
-wikiTask = Task "md" extract summarize renderIndex renderPage renderWidget
+wikiTask = Task "md" extract summarize renderWidget
     where
         extract filepath gitDate text =
             case markDownExtract text gitDate filepath of
@@ -40,15 +42,15 @@ wikiTask = Task "md" extract summarize renderIndex renderPage renderWidget
             let fileNames = map (parentDir </>) $ HM.keys metaMap
             in  WikiSummary (fileNames ++ subDirs)
 
-        renderIndex WikiSummary{..} = do
-            need [$(templDirQ "wiki-index.hamlet")]
-            let html = $(hamletFile $(templDirQ "wiki-index.hamlet")) ()
-            return $ renderHtml html
+        -- renderIndex WikiSummary{..} = do
+        --     need [$(templDirQ "wiki-index.hamlet")]
+        --     let html = $(hamletFile $(templDirQ "wiki-index.hamlet")) ()
+        --     return $ renderHtml html
 
-        renderPage WikiSummary{..} WikiMeta{..} = do
-            need [$(templDirQ "wiki.hamlet")]
-            let html = $(hamletFile $(templDirQ "wiki.hamlet")) ()
-            return $ renderHtml html
+        -- renderPage WikiSummary{..} WikiMeta{..} = do
+        --     need [$(templDirQ "wiki.hamlet")]
+        --     let html = $(hamletFile $(templDirQ "wiki.hamlet")) ()
+        --     return $ renderHtml html
 
         renderWidget WikiSummary{..} = do
             let widget = WikiWidget subWikis

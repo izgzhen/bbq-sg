@@ -1,21 +1,11 @@
 module BBQ.Config (
-  templDirQ
-, BuildConfig(..)
+  BuildConfig(..)
 , defaultBuildConfig
 , SiteConfig(..)
 ) where
 
-import Language.Haskell.TH
 import System.FilePath
--- import Prelude (String)
 import ClassyPrelude
-
-defaultTemplateDir :: FilePath
-defaultTemplateDir = "templates"
-
-templDirQ :: FilePath -> Q Exp
-templDirQ s = [| defaultTemplateDir </> s |]
-
 
 -- Don't export the constructor, use record syntax instead
 data BuildConfig = BuildConfig {

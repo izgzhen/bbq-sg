@@ -1,5 +1,6 @@
 module BBQ.Task (
   Task(..)
+, Render(..)
 , Collector(..)
 , runRecTask
 , runTask
@@ -14,9 +15,15 @@ data Task meta s = Task {
     extension    :: FilePath,
     extract      :: FilePath -> Text -> Text -> Maybe meta,
     summarize    :: FilePath -> [FilePath] -> HashMap FilePath meta -> s, -- task implementor can choose to ignore the second parameter
-    renderIndex  :: s -> Action Text,
-    renderPage   :: s -> meta -> Action Text, -- Source path, rendered text
+    -- renderIndex  :: BuildConfig -> s -> Action Text,
+    -- renderPage   :: BuildConfig -> s -> meta -> Action Text, -- Source path, rendered text
     renderWidget :: s -> Action Text
+}
+
+-- Render should be provided by the user
+data Render meta s = Render {
+    renderIndex  :: s -> Action Text,
+    renderPage   :: s -> meta -> Action Text -- Source path, rendered text
 }
 
 data Collector = Collector {
@@ -25,20 +32,20 @@ data Collector = Collector {
     resolver :: HashMap FilePath Text -> Maybe Text
 }
 
-runRecTask :: FilePath -> Task m s -> PathTree -> Rules ()
-runRecTask buildPath task@Task{..} pathTree@(Dir _ _) = do
+runRecTask :: FilePath -> Task meta s -> Render meta s -> PathTree -> Rules ()
+runRecTask buildPath task@Task{..} render pathTree@(Dir _ _) = do
     let (Dir rootDir subTrees) = filterFTree (\f -> takeExtension f == "." ++ extension) pathTree
     let files = filterFiles subTrees
     let dirs  = filterDirs subTrees
 
-    runTask task buildPath rootDir files $ map (\(Dir x _) -> x) dirs
+    runTask task render buildPath rootDir files $ map (\(Dir x _) -> x) dirs
 
-    forM_ dirs $ runRecTask buildPath task
+    forM_ dirs $ runRecTask buildPath task render
 
-runRecTask _ _ _ = error "Impossible happens"
+runRecTask _ _ _ _ = error "Impossible happens"
 
-runTask :: Task meta s -> FilePath -> FilePath -> [FilePath] -> [FilePath] -> Rules ()
-runTask Task{..} buildPath rootDir files dirPaths = do
+runTask :: Task meta s -> Render meta s -> FilePath -> FilePath -> [FilePath] -> [FilePath] -> Rules ()
+runTask Task{..} Render{..} buildPath rootDir files dirPaths = do
     want [buildPath </> rootDir </> "index.html"]
     want [buildPath </> rootDir </> "widget.json"]
     want $ map (\f -> buildPath </> f -<.> ".html") files

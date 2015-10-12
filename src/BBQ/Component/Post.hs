@@ -1,5 +1,7 @@
 module BBQ.Component.Post (
   postTask
+, PostMeta(..)
+, PostSummary(..)
 , PostWidget(..)
 ) where
 
@@ -30,7 +32,7 @@ instance FromJSON PostWidget
 
 
 postTask :: Task PostMeta PostSummary
-postTask = Task "md" extract summarize renderIndex renderPage renderWidget
+postTask = Task "md" extract summarize renderWidget
     where
         extract filepath gitDate text =
             case markDownExtract text gitDate filepath of
@@ -47,16 +49,7 @@ postTask = Task "md" extract summarize renderIndex renderPage renderWidget
                                         Just pids -> HM.insert tag (pid : pids) m)
                           m tags
 
-        renderIndex PostSummary{..} = do
-            need [$(templDirQ "index.hamlet")]
-            let html = $(hamletFile $(templDirQ "index.hamlet")) ()
-            return $ renderHtml html
-
-        renderPage PostSummary{..} PostMeta{..} = do
-            need [$(templDirQ "post.hamlet")]
-            let html = $(hamletFile $(templDirQ "post.hamlet")) ()
-            return $ renderHtml html
-
         renderWidget PostSummary{..} = do
             let widget = PostWidget . S.fromList . concat $ HM.elems categories
             return $ encode widget
+            

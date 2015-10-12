@@ -1,5 +1,5 @@
 name:                bbq-sg
-version:             0.6.0
+version:             0.6.1
 license:             MIT
 license-file:        LICENSE
 author:              Zhen Zhang
@@ -12,14 +12,13 @@ library
   Ghc-Options:         -Wall
   exposed-modules:     BBQ.Task,
                        BBQ.Import,
-                       BBQ.Main,
                        BBQ.Component.Post,
                        BBQ.Component.Index,
-                       BBQ.Component.Wiki
-
-  other-modules:       BBQ.Config,
-                       BBQ.Route,
+                       BBQ.Component.Wiki,
                        BBQ.FTree,
+                       BBQ.Config
+
+  other-modules:       BBQ.Route,
                        BBQ.Component.Common
 
   default-extensions:  TemplateHaskell,
