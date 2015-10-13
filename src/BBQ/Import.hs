@@ -30,13 +30,13 @@ import GHC.Generics (Generic)
 import Data.Aeson as A (encode, decode, FromJSON, ToJSON)
 import Text.Hamlet
 import Data.HashMap.Lazy (HashMap)
-import ClassyPrelude hiding (decodeUtf8, encodeUtf8, decode, encode)
+import ClassyPrelude hiding (decodeUtf8, encodeUtf8)
 import Control.Monad.Except (ExceptT, runExceptT, throwError, Except)
 import qualified Text.Blaze.Html.Renderer.Text as BLZ
 import Development.Shake hiding (readFile', writeFile', Env, (*>))
 import Development.Shake.FilePath
 import qualified Development.Shake as S
-import Development.Shake.FilePath
+-- import Development.Shake.FilePath
 import qualified Data.Text.Lazy as TL
 import Text.Pandoc (Pandoc)
 import Data.List.Split (splitOn)
@@ -71,8 +71,8 @@ type Widgets = HashMap Text Widget
 
 
 newCache' :: forall v. Action v -> Rules (Action v)
-newCache' action = do
-    cache <- newCache $ \() -> action
+newCache' act = do
+    cache <- newCache $ \() -> act
     return (cache ())
 
 encode :: ToJSON a => a -> Text

@@ -34,6 +34,6 @@ data SiteConfig = SiteConfig {
 
 defSiteConfig :: SiteConfig
 defSiteConfig = SiteConfig {
-    host   = "http://localhost",
+    host   = "http://localhost:3000",
     author = "yourname"
 }

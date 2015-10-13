@@ -14,16 +14,16 @@ import qualified Data.HashMap.Lazy as HM
 data WikiMeta = WikiMeta {
   wid     :: WikiId
 , title   :: Text
-, date    :: UTCTime
+, date    :: Maybe UTCTime
 , body    :: Pandoc
 }
 
 data WikiSummary = WikiSummary {
-  subWikis :: [FilePath] -- SubWiki URLs relative to root
+  subWikis :: [WikiId]
 }
 
 data WikiWidget = WikiWidget {
-  wikis :: [FilePath]
+  wikis :: [WikiId]
 } deriving (Generic, Show)
 
 instance ToJSON WikiWidget
@@ -35,22 +35,12 @@ wikiTask = Task "md" extract summarize renderWidget
         extract filepath gitDate text =
             case markDownExtract text gitDate filepath of
                 Nothing -> Nothing
-                Just (name, title, _, mDate, pandoc) ->
-                    Just $ WikiMeta (WikiId $ pack name) title mDate pandoc
+                Just (_, title, mDate, pandoc) ->
+                    Just $ WikiMeta (WikiId $ pack $ dropDirectory1 filepath) title mDate pandoc
 
         summarize parentDir subDirs metaMap =
             let fileNames = map (parentDir </>) $ HM.keys metaMap
-            in  WikiSummary (fileNames ++ subDirs)
-
-        -- renderIndex WikiSummary{..} = do
-        --     need [$(templDirQ "wiki-index.hamlet")]
-        --     let html = $(hamletFile $(templDirQ "wiki-index.hamlet")) ()
-        --     return $ renderHtml html
-
-        -- renderPage WikiSummary{..} WikiMeta{..} = do
-        --     need [$(templDirQ "wiki.hamlet")]
-        --     let html = $(hamletFile $(templDirQ "wiki.hamlet")) ()
-        --     return $ renderHtml html
+            in  WikiSummary $ map (WikiId . pack . dropDirectory1) (fileNames ++ subDirs)
 
         renderWidget WikiSummary{..} = do
             let widget = WikiWidget subWikis

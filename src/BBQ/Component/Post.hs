@@ -14,13 +14,14 @@ import qualified Data.Set as S
 data PostMeta = PostMeta {
   pid     :: PostId
 , title   :: Text
-, date    :: UTCTime
+, date    :: Maybe UTCTime
 , body    :: Pandoc
 , tags    :: [Text]
 }
 
 data PostSummary = PostSummary {
-  categories :: HashMap Text [PostId] -- Tag -> Posts
+  categories :: HashMap Text [PostId],
+  postList   :: [PostId]
 }
 
 data PostWidget = PostWidget {
@@ -37,19 +38,20 @@ postTask = Task "md" extract summarize renderWidget
         extract filepath gitDate text =
             case markDownExtract text gitDate filepath of
                 Nothing -> Nothing
-                Just (name, title, _, mDate, pandoc) ->
+                Just (name, title, mDate, pandoc) ->
                     Just $ PostMeta (PostId $ pack name) title mDate pandoc []
 
-        summarize _ _ metaMap = PostSummary $ HM.foldr f HM.empty metaMap
+        summarize _ _ metaMap = uncurry PostSummary $ HM.foldr f (HM.empty, []) metaMap
             where
-                f :: PostMeta -> HashMap Text [PostId] -> HashMap Text [PostId]
-                f PostMeta{..} m = 
-                    foldr (\tag m -> case HM.lookup tag m of
+                f PostMeta{..} (m, l) = (m', l')
+                  where
+                    m' = foldr (\tag m -> case HM.lookup tag m of
                                         Nothing   -> HM.insert tag [pid] m
                                         Just pids -> HM.insert tag (pid : pids) m)
-                          m tags
+                               m tags
+                    l' = l ++ [pid]
 
         renderWidget PostSummary{..} = do
-            let widget = PostWidget . S.fromList . concat $ HM.elems categories
+            let widget = PostWidget $ S.fromList postList
             return $ encode widget
             

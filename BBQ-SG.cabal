@@ -1,5 +1,5 @@
 name:                bbq-sg
-version:             0.6.1
+version:             0.6.3
 license:             MIT
 license-file:        LICENSE
 author:              Zhen Zhang
@@ -16,10 +16,10 @@ library
                        BBQ.Component.Index,
                        BBQ.Component.Wiki,
                        BBQ.FTree,
-                       BBQ.Config
+                       BBQ.Config,
+                       BBQ.Route
 
-  other-modules:       BBQ.Route,
-                       BBQ.Component.Common
+  other-modules:       BBQ.Component.Common
 
   default-extensions:  TemplateHaskell,
                        QuasiQuotes,
@@ -32,7 +32,9 @@ library
                        DeriveDataTypeable,
                        GeneralizedNewtypeDeriving,
                        RankNTypes,
-                       DeriveGeneric
+                       DeriveGeneric,
+                       TypeSynonymInstances,
+                       FlexibleInstances
 
   build-depends:       base >=4.8 && <4.9,
                        template-haskell >=2.10 && <2.11,

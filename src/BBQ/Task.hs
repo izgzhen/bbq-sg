@@ -15,37 +15,34 @@ data Task meta s = Task {
     extension    :: FilePath,
     extract      :: FilePath -> Text -> Text -> Maybe meta,
     summarize    :: FilePath -> [FilePath] -> HashMap FilePath meta -> s, -- task implementor can choose to ignore the second parameter
-    -- renderIndex  :: BuildConfig -> s -> Action Text,
-    -- renderPage   :: BuildConfig -> s -> meta -> Action Text, -- Source path, rendered text
     renderWidget :: s -> Action Text
 }
 
 -- Render should be provided by the user
 data Render meta s = Render {
     renderIndex  :: s -> Action Text,
-    renderPage   :: s -> meta -> Action Text -- Source path, rendered text
+    renderPage   :: BuildConfig -> s -> meta -> Action Text -- Source path, rendered text
 }
 
 data Collector = Collector {
     target   :: FilePath,
-    widgets  :: [FilePath],
-    resolver :: HashMap FilePath Text -> Maybe Text
+    widgets  :: [FilePath]
 }
 
-runRecTask :: FilePath -> Task meta s -> Render meta s -> PathTree -> Rules ()
-runRecTask buildPath task@Task{..} render pathTree@(Dir _ _) = do
+runRecTask :: BuildConfig -> FilePath -> Task meta s -> Render meta s -> PathTree -> Rules ()
+runRecTask config buildPath task@Task{..} render pathTree@(Dir _ _) = do
     let (Dir rootDir subTrees) = filterFTree (\f -> takeExtension f == "." ++ extension) pathTree
     let files = filterFiles subTrees
     let dirs  = filterDirs subTrees
 
-    runTask task render buildPath rootDir files $ map (\(Dir x _) -> x) dirs
+    runTask config task render buildPath rootDir files $ map (\(Dir x _) -> x) dirs
 
-    forM_ dirs $ runRecTask buildPath task render
+    forM_ dirs $ runRecTask config buildPath task render
 
-runRecTask _ _ _ _ = error "Impossible happens"
+runRecTask _ _ _ _ _ = error "Impossible happens"
 
-runTask :: Task meta s -> Render meta s -> FilePath -> FilePath -> [FilePath] -> [FilePath] -> Rules ()
-runTask Task{..} Render{..} buildPath rootDir files dirPaths = do
+runTask :: BuildConfig ->Task meta s -> Render meta s -> FilePath -> FilePath -> [FilePath] -> [FilePath] -> Rules ()
+runTask config Task{..} Render{..} buildPath rootDir files dirPaths = do
     want [buildPath </> rootDir </> "index.html"]
     want [buildPath </> rootDir </> "widget.json"]
     want $ map (\f -> buildPath </> f -<.> ".html") files
@@ -65,7 +62,7 @@ runTask Task{..} Render{..} buildPath rootDir files dirPaths = do
         (metaMap, summary) <- getMS
         case HM.lookup (dropExtension $ takeFileName out) metaMap of
             Nothing   -> return ()
-            Just meta -> renderPage summary meta >>= writeFile' out
+            Just meta -> renderPage config summary meta >>= writeFile' out
 
     buildPath </> rootDir </> "index.html" %> \out -> do
         (_, summary) <- getMS
@@ -84,14 +81,16 @@ runTask Task{..} Render{..} buildPath rootDir files dirPaths = do
         return (pack gitDate)
 
 
-runCollectTask :: FilePath -> Collector -> Rules ()
-runCollectTask buildPath Collector{..} = do
+runCollectTask :: FilePath -> Collector -> (HashMap FilePath Text -> Maybe (Text, [FilePath])) -> Rules ()
+runCollectTask buildPath Collector{..} resolver = do
     want [buildPath </> target]
     let widgets' = map (buildPath </>) widgets
     buildPath </> target %> \out -> do
         need widgets'
         texts <- mapM readFile' widgets'
         case resolver $ HM.fromList $ zip widgets texts of
-            Nothing   -> putNormal $ "can't build " ++ target
-            Just text -> writeFile' out text
+            Nothing           -> putNormal $ "can't build " ++ target
+            Just (text, deps) -> do
+                need deps
+                writeFile' out text
 

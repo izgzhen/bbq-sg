@@ -1,6 +1,7 @@
 module BBQ.Route (
   absolutePath
 , filePath
+, absolutePathNoEscape
 , PostId(..)
 , WikiId(..)
 , WebPath(..)
@@ -24,7 +25,10 @@ instance ToJSON PostId
 instance FromJSON PostId
 
 newtype WikiId = WikiId { unWikiId :: Text }
-    deriving (PathInfo)
+    deriving (PathInfo, Eq, Show, Ord, Generic)
+
+instance ToJSON WikiId
+instance FromJSON WikiId
 
 data WebPath = Index
              | Post PostId
@@ -33,17 +37,27 @@ data WebPath = Index
 
 $(derivePathInfo ''WebPath)
 
+class ToPath x where
+    toURLPath  :: x -> FilePath
+    toFilePath :: x -> FilePath
 
-absolutePath :: Monad m => WebPath -> ReaderT BuildConfig m FilePath
-absolutePath p = do
-    sconf <- siteConfig <$> ask
-    let h = host sconf
-    return $ unpack $ h ++ encodePathInfo (toPathSegments p) [] ++ ".html"
+instance ToPath WebPath where
+    toURLPath p = unpack $ encodePathInfo (toPathSegments p) []
+    toFilePath p = joinPath (map unpack (toPathSegments p))
 
-filePath :: Monad m => WebPath -> ReaderT BuildConfig m FilePath
-filePath p = do
-    tDir <- targetDir <$> ask
-    return $ tDir </> joinPath (map unpack (toPathSegments p)) ++ (".html" :: String)
+instance ToPath FilePath where
+    toURLPath p = unpack $ encodePathInfo [pack p] []
+    toFilePath = id
+
+absolutePath :: ToPath p => SiteConfig -> p -> FilePath
+absolutePath sconf p = unpack (host sconf) ++ toURLPath p
+
+absolutePathNoEscape :: ToPath p => SiteConfig -> p -> FilePath
+absolutePathNoEscape sconf p = unpack (host sconf) ++ toFilePath p
+
+
+filePath :: ToPath p => BuildConfig -> p -> FilePath
+filePath BuildConfig{..} p = targetDir </> toFilePath p ++ (".html" :: String)
 
 -- They are defined internally in Text.Hamlet
 type Render url = url -> [(Text, Text)] -> Text
