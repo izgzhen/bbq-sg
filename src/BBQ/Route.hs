@@ -14,7 +14,7 @@ import Web.Routes
 import Web.Routes.TH
 import BBQ.Config
 import System.FilePath
-import Text.Hamlet
+import Text.Hamlet hiding (Translate, Render)
 import Text.Blaze.Html (toHtml)
 import Data.Aeson (ToJSON, FromJSON)
 
